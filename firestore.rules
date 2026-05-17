@@ -1,0 +1,33 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /controleUber/estadoPrincipal {
+      allow read: if usuarioAutorizado();
+      allow write: if usuarioAutorizado() && estadoValido(request.resource.data);
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+
+  function usuarioAutorizado() {
+    return request.auth != null
+      && request.auth.uid in ['COLOQUE_O_UID_AUTORIZADO_AQUI'];
+  }
+
+  function estadoValido(data) {
+    return data.keys().hasOnly([
+      'config',
+      'dados',
+      'fechamentos',
+      'atualizadoEm',
+      'resetadoEm'
+    ])
+    && data.config is map
+    && data.dados is list
+    && data.fechamentos is map
+    && data.dados.size() <= 5000;
+  }
+}
