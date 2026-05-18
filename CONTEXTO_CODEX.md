@@ -53,6 +53,7 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
 - Git local inicializado na pasta do OneDrive, conectado ao remoto `origin` e branch `main` configurada para acompanhar `origin/main`.
 - Usuario Git local configurado como `kupka1988 <kupka1988@users.noreply.github.com>`.
 - Adicionados `.firebaserc` e `.gitignore` para preparar deploy Firebase e evitar versionar backups/JSON legado.
+- Commit `e9f5207`: `Configura Git e Firebase local`, enviado para `origin/main`.
 - Backup criado antes das alteracoes de configuracao: `20260518-172258`.
 
 ## Pendencias importantes
