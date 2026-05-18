@@ -14,7 +14,7 @@ service cloud.firestore {
 
   function usuarioAutorizado() {
     return request.auth != null
-      && request.auth.uid in ['COLOQUE_O_UID_AUTORIZADO_AQUI'];
+      && request.auth.uid in ['vGKk21sl83bn4jEV3xltI4vD8ha2'];
   }
 
   function estadoValido(data) {
