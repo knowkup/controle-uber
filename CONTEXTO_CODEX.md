@@ -56,12 +56,13 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
 - Commit `e9f5207`: `Configura Git e Firebase local`, enviado para `origin/main`.
 - Backup criado antes das alteracoes de configuracao: `20260518-172258`.
 - Em 2026-05-18, `firestore.rules` atualizado com UID autorizado `vGKk21sl83bn4jEV3xltI4vD8ha2`.
+- Commit `2fe7414`: `Configura UID autorizado no Firestore`, enviado para `origin/main`.
 - Backup criado antes da alteracao das regras: `20260518-174428`.
 
 ## Pendencias importantes
 
 - As regras de `firestore.rules` ainda nao foram publicadas no Firebase.
-- Fazer login no Firebase CLI nesta maquina antes do deploy, se `firebase deploy` solicitar autenticacao.
+- Deploy testado com `firebase deploy --only firestore:rules --project controle-uber-9af6b`, bloqueado por falta de autenticacao: executar `firebase login`.
 - Sem publicar regras seguras no Firebase, o banco pode continuar publicamente legivel/escrevivel dependendo das regras atuais do console.
 - Nao houve teste automatizado em navegador nesta rodada; foco foi configurar Git/Firebase CLI e preparar deploy das regras.
 
