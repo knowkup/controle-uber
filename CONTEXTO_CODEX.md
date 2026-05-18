@@ -14,8 +14,8 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
 - Nome: Controle Uber.
 - Repositorio GitHub: `https://github.com/kupka1988/controle-uber.git`.
 - Branch principal: `main`.
-- Pasta local do Codex nesta sessao: `C:\Users\felip\Documents\Codex\2026-05-17\controle-uber-outro-projeto-que-tenho\github-controle-uber`.
-- Pasta do OneDrive usada pelo usuario: `C:\Users\felip\OneDrive\Documentos\14. Sistemas Kupka\App Uber`.
+- Pasta local do Codex nesta sessao: `C:\Users\felipe.k\Documents\New project`.
+- Pasta do OneDrive usada pelo usuario: `C:\Users\felipe.k\OneDrive\Documentos\14. Sistemas Kupka\App Uber`.
 
 ## Fluxo combinado
 
@@ -30,6 +30,8 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
   - `index.html`: estrutura da pagina e imports.
   - `styles.css`: estilos e responsividade mobile.
   - `app.js`: logica do app, dashboard, historico, import/export JSON, localStorage e Firebase.
+  - `.firebaserc`: projeto Firebase padrao `controle-uber-9af6b`.
+  - `.gitignore`: ignora `backups/` e `controle-uber.json`.
   - `firebase.json`: referencia local para regras do Firestore.
   - `firestore.rules`: regras seguras preparadas para Firestore.
 - Foco principal de UX: mobile.
@@ -47,21 +49,27 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
 - Corrigida a leitura da meta consistente no historico mensal.
 - Arquivos atualizados tambem na pasta do OneDrive.
 - Backup criado antes da alteracao: `20260517-132641`.
+- Em 2026-05-18 nesta maquina, instalados Git `2.54.0`, Node.js `24.15.0`, npm `11.12.1` e Firebase CLI `14.11.0` via winget.
+- Git local inicializado na pasta do OneDrive, conectado ao remoto `origin` e branch `main` configurada para acompanhar `origin/main`.
+- Usuario Git local configurado como `kupka1988 <kupka1988@users.noreply.github.com>`.
+- Adicionados `.firebaserc` e `.gitignore` para preparar deploy Firebase e evitar versionar backups/JSON legado.
+- Backup criado antes das alteracoes de configuracao: `20260518-172258`.
 
 ## Pendencias importantes
 
 - As regras de `firestore.rules` ainda nao foram publicadas no Firebase.
-- O Firebase CLI nao estava instalado/disponivel nesta sessao.
 - Antes de publicar `firestore.rules`, configurar autenticacao no Firebase e trocar `COLOQUE_O_UID_AUTORIZADO_AQUI` pelo UID autorizado do usuario.
+- Fazer login no Firebase CLI nesta maquina antes do deploy, se `firebase deploy` solicitar autenticacao.
 - Sem publicar regras seguras no Firebase, o banco pode continuar publicamente legivel/escrevivel dependendo das regras atuais do console.
-- Nao houve teste automatizado em navegador nesta sessao porque Node/Python nao estavam disponiveis no ambiente.
+- Nao houve teste automatizado em navegador nesta rodada; foco foi configurar Git/Firebase CLI e preparar deploy das regras.
 
 ## Comandos uteis
 
 - Ver estado do Git: `git status --short --branch`.
 - Ver ultimo commit: `git log -1 --oneline`.
 - Validar whitespace do diff: `git diff --check`.
-- Enviar alteracoes: `git add index.html styles.css app.js firebase.json firestore.rules CONTEXTO_CODEX.md`, `git commit -m "<mensagem>"`, `git push origin main`.
+- Enviar alteracoes: `git add .firebaserc .gitignore firebase.json firestore.rules CONTEXTO_CODEX.md`, `git commit -m "<mensagem>"`, `git push origin main`.
+- Publicar regras: `firebase deploy --only firestore:rules`.
 
 ## Proximos passos sugeridos
 
