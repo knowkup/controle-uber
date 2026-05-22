@@ -566,107 +566,98 @@ input[type="date"] {
 .meta-card .meta-nome,
 .meta-card .meta-progress-text { color: var(--muted); }
 
-.faixa-performance {
-  margin-top: 18px;
+.ritmo-mes-card {
+  overflow: hidden;
 }
 
-.faixa-topo {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: baseline;
-  margin-bottom: 10px;
+.ritmo-meter {
+  padding: 12px 6px 0;
 }
 
-.faixa-topo strong {
-  font-size: 16px;
-  letter-spacing: 0;
-  font-weight: 700;
-}
-
-.faixa-topo span {
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 580;
-}
-
-.faixa-barra {
-  height: 18px;
-  border-radius: 999px;
-  background:
-    linear-gradient(90deg, rgba(18, 20, 23, 0.08) 0, rgba(18, 20, 23, 0.08) 100%),
-    linear-gradient(90deg, #fee2e2 0%, #fef3c7 42%, #dcfce7 72%, #dbeafe 100%);
+.ritmo-arc {
+  --pointer-angle: 0deg;
   position: relative;
-  overflow: visible;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  width: min(100%, 430px);
+  aspect-ratio: 2 / 1;
+  margin: 0 auto;
+  overflow: hidden;
 }
 
-.faixa-preenchida {
-  height: 100%;
-  width: 0%;
-  border-radius: 999px;
-  background: rgba(17,24,39,0.82);
-  transition: width 0.25s ease;
-}
-
-.faixa-marcador {
+.ritmo-arc::before {
+  content: "";
   position: absolute;
-  top: -7px;
-  left: 0%;
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  background: white;
-  border: 6px solid #111827;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
-  transform: translateX(-50%);
-  transition: left 0.25s ease;
-  z-index: 3;
+  inset: 4px 4px auto;
+  aspect-ratio: 2 / 1;
+  border-radius: 999px 999px 0 0;
+  background: conic-gradient(from 270deg at 50% 100%, #ef4444 0deg, #f59e0b 54deg, #facc15 92deg, #22c55e 180deg, transparent 180deg);
+  -webkit-mask: radial-gradient(circle at 50% 100%, transparent 0 56%, #000 57% 66%, transparent 67%);
+  mask: radial-gradient(circle at 50% 100%, transparent 0 56%, #000 57% 66%, transparent 67%);
 }
 
-.faixa-legenda {
-  position: relative;
-  display: block;
-  min-height: 54px;
-  margin-top: 15px;
-  font-size: 12px;
-  color: var(--muted);
-  font-weight: 580;
-}
-
-.faixa-legenda span {
+.ritmo-ponteiro {
   position: absolute;
-  top: 0;
-  max-width: 124px;
-  white-space: normal;
-  line-height: 1.18;
-  text-align: center;
+  left: 50%;
+  bottom: 0;
+  width: 4px;
+  height: 39%;
+  border-radius: 999px;
+  background: #111827;
+  transform-origin: 50% 100%;
+  transform: translateX(-50%) rotate(var(--pointer-angle));
+  box-shadow: 0 5px 16px rgba(15, 23, 42, 0.18);
+  transition: transform 0.25s ease;
 }
 
-.faixa-legenda span::before {
+.ritmo-ponteiro::after {
   content: "";
   position: absolute;
   left: 50%;
-  top: -21px;
-  width: 1px;
-  height: 17px;
-  background: rgba(18, 20, 23, 0.36);
+  bottom: -7px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #111827;
   transform: translateX(-50%);
+  border: 3px solid #fff;
 }
 
-.faixa-legenda span strong {
-  display: block;
-  color: var(--text);
+.ritmo-tick {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  height: 10px;
+  background: rgba(17, 24, 39, 0.34);
+  transform-origin: 50% 0;
+}
+
+.ritmo-tick.sobrevivencia { transform: rotate(-90deg) translateY(-185px); }
+.ritmo-tick.estabilidade { transform: rotate(0deg) translateY(-185px); }
+.ritmo-tick.conforto { transform: rotate(90deg) translateY(-185px); }
+
+.ritmo-legenda {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 8px;
   font-size: 12px;
-  font-weight: 720;
+  color: var(--muted);
+  font-weight: 620;
 }
 
-.faixa-legenda span small {
-  display: block;
-  margin-top: 3px;
-  color: var(--muted);
-  font-size: 11px;
+.ritmo-legenda span:nth-child(2) { text-align: center; }
+.ritmo-legenda span:nth-child(3) { text-align: right; }
+
+.ritmo-resumo {
+  margin-top: 12px;
+  padding: 12px 13px;
+  border-radius: 12px;
+  background: #fbfaf7;
+  border: 1px solid #efebe2;
+  color: var(--text);
+  font-size: 14px;
   font-weight: 560;
+  line-height: 1.4;
 }
 
 .kpi-card {
@@ -732,6 +723,20 @@ input[type="date"] {
 .semana-valor {
   text-align: right;
   color: var(--text);
+}
+
+.meta-progress-text .meta-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.meta-state {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
 }
 
 

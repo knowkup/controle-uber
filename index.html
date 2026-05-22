@@ -188,7 +188,7 @@
       <strong id="dashboardAtualMes">R$ 0,00</strong>
     </div>
     <div class="dashboard-sobra-box">
-      <span>Sobra projetada</span>
+      <span>Resultado projetado</span>
       <strong id="dashboardSobraProjetada">R$ 0,00</strong>
       <small id="dashboardSobraBase">Depois dos custos do mês</small>
     </div>
@@ -196,29 +196,30 @@
   <div class="dashboard-status" id="dashboardStatus">Aguardando lançamentos</div>
 </div>
 
-<div class="card">
-  <h3 class="heading-with-icon"><span class="heading-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M3 12h18"/><path d="M6 12a6 6 0 0 1 12 0"/><path d="m12 12 4-4"/></svg></span>Faixa de performance</h3>
+<div class="card ritmo-mes-card">
+  <h3 class="heading-with-icon"><span class="heading-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M3 12h18"/><path d="M6 12a6 6 0 0 1 12 0"/><path d="m12 12 4-4"/></svg></span>Ritmo do Mês</h3>
 
-  <div class="faixa-topo">
-    <strong id="faixaTexto">Você ainda está construindo ritmo</strong>
-    <span id="faixaAtual">Atual: R$ 0,00</span>
+  <div class="ritmo-meter" aria-label="Ritmo do mês">
+    <div class="ritmo-arc">
+      <div class="ritmo-tick sobrevivencia"></div>
+      <div class="ritmo-tick estabilidade"></div>
+      <div class="ritmo-tick conforto"></div>
+      <div class="ritmo-ponteiro" id="ritmoPonteiro"></div>
+    </div>
   </div>
 
-  <div class="faixa-barra">
-    <div class="faixa-preenchida" id="faixaPreenchida"></div>
-    <div class="faixa-marcador" id="faixaMarcador"></div>
+  <div class="ritmo-legenda">
+    <span id="faixaMinima">Sobrevivência</span>
+    <span id="faixaConsistente">Estabilidade</span>
+    <span id="faixaIdeal">Conforto</span>
   </div>
 
-  <div class="faixa-legenda">
-    <span id="faixaMinima">Mínima</span>
-    <span id="faixaConsistente">Consistente</span>
-    <span id="faixaIdeal">Ideal</span>
-  </div>
+  <div class="ritmo-resumo" id="faixaTexto">Aguardando lançamentos</div>
 </div>
 
 <div class="dashboard-grid-3">
   <div class="meta-card" id="cardMetaMinima">
-    <div class="meta-nome">Projeção mínima</div>
+    <div class="meta-nome">Sobrevivência</div>
     <div class="meta-percent" id="dashPctMinima">0%</div>
     <div class="meta-progress-bar"><div class="meta-progress-fill" id="dashBarMinima"></div></div>
     <div class="meta-progress-text" id="dashProgressoMinima">R$ 0,00 / R$ 0,00</div>
@@ -226,7 +227,7 @@
   </div>
 
   <div class="meta-card" id="cardMetaConsistente">
-    <div class="meta-nome">Projeção consistente</div>
+    <div class="meta-nome">Estabilidade</div>
     <div class="meta-percent" id="dashPctConsistente">0%</div>
     <div class="meta-progress-bar"><div class="meta-progress-fill" id="dashBarConsistente"></div></div>
     <div class="meta-progress-text" id="dashProgressoConsistente">R$ 0,00 / R$ 0,00</div>
@@ -234,7 +235,7 @@
   </div>
 
   <div class="meta-card" id="cardMetaIdeal">
-    <div class="meta-nome">Projeção ideal</div>
+    <div class="meta-nome">Conforto</div>
     <div class="meta-percent" id="dashPctIdeal">0%</div>
     <div class="meta-progress-bar"><div class="meta-progress-fill" id="dashBarIdeal"></div></div>
     <div class="meta-progress-text" id="dashProgressoIdeal">R$ 0,00 / R$ 0,00</div>
@@ -252,7 +253,7 @@
         <p id="dashMediaSub">por dia trabalhado</p>
       </div>
       <div class="kpi-card">
-        <span>Para manter o mínimo</span>
+        <span id="dashProximaMetaLabel">Próxima meta</span>
         <strong id="dashMetaAjustada">R$ 0,00</strong>
         <p>por dia restante planejado</p>
       </div>
@@ -263,12 +264,12 @@
     <h3 class="heading-with-icon"><span class="heading-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><path d="M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="2"/></svg></span>Semana atual</h3>
     <div class="dashboard-grid-2">
       <div class="kpi-card">
-        <span>Ganho na semana</span>
-        <strong id="dashSemanaAtual">R$ 0,00</strong>
-        <p id="dashSemanaSub">Meta semanal: R$ 0,00</p>
+        <span>Meta semanal</span>
+        <strong id="dashMetaSemana">R$ 0,00</strong>
+        <p id="dashSemanaExecutado">Executado semanal: R$ 0,00</p>
       </div>
       <div class="kpi-card">
-        <span>Ritmo semanal</span>
+        <span>Percentual semanal</span>
         <strong id="dashSemanaStatus">0%</strong>
         <p id="dashSemanaFalta">Aguardando meta consistente</p>
       </div>

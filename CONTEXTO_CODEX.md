@@ -21,7 +21,7 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
 - Revisar diff antes de finalizar.
 - Atualizar documentacao quando a mudanca registrar regra, fluxo, decisao tecnica ou historico relevante.
 - Fazer commit ao final de alteracao solicitada quando houver mudanca em arquivo.
-- Fazer push quando for entrega/publicacao no remoto ou quando o usuario pedir.
+- Fazer push ao final da acao quando houver mudanca de codigo, pois a validacao do usuario acontece em producao.
 
 ## Projeto
 
@@ -76,6 +76,9 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
 
 ## Mudancas recentes
 
+- Em 2026-05-22, reforcada a regra operacional: alteracao de codigo deve terminar com validacao, commit e push para permitir validacao em producao.
+- Em 2026-05-22, ajustada a Dashboard com foco mobile: bloco `Ritmo do Mes`, ponteiro real baseado na projecao, metas Sobrevivencia/Estabilidade/Conforto, separacao de Executado/Projecao e semana atual pela proxima meta ativa.
+- Backup criado antes da alteracao da Dashboard: `20260522-102833`.
 - Em 2026-05-22, incorporadas ao contexto do Controle Uber as premissas de trabalho reaproveitaveis do Rota Financeira, separando regras transferiveis de conceitos especificos daquele produto.
 - Corrigida a pasta oficial local para o OneDrive e corrigido o caminho de backups.
 - Backup criado antes da alteracao documental: `20260522-084404`.
