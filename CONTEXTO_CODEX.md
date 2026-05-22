@@ -76,6 +76,8 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
 
 ## Mudancas recentes
 
+- Em 2026-05-22, reorganizada a Operacao do Carro em tres grupos de duas metricas: Desempenho, Eficiencia e Combustivel, melhorando a leitura mobile.
+- Backup criado antes da reorganizacao dos grupos da operacao: `20260522-151920`.
 - Em 2026-05-22, refinada a aba Inicio com cores premium por tipo no Resumo Financeiro, reorganizada Operacao do Carro por KM, eficiencia e combustivel, e alinhado o Historico para visual claro premium.
 - Backup criado antes do refinamento visual de Inicio/Historico: `20260522-145217`.
 - Em 2026-05-22, ajustada a responsividade da composicao das metas no mobile para manter Definido/Saldo lado a lado e trocado o destaque dark do Resultado do Mes por um destaque claro alinhado a identidade visual.
