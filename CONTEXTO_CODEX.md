@@ -76,6 +76,8 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
 
 ## Mudancas recentes
 
+- Em 2026-05-22, adicionada edicao de metas cadastradas, movida a composicao das metas para a Dashboard antes de Semanas do mes, removido o bloco de metas da aba Inicio e refinado o destaque do Resultado do Mes.
+- Backup criado antes da mudanca de edicao/composicao de metas: `20260522-140435`.
 - Em 2026-05-22, a configuracao de metas deixou de usar campos fixos e passou a aceitar metas cadastraveis ilimitadas com objetivo Sobrevivencia, Estabilidade ou Conforto; a dashboard passou a calcular totais acumulados por objetivo e migrar automaticamente metas antigas.
 - Backup criado antes da mudanca para metas cadastraveis: `20260522-121312`.
 - Em 2026-05-22, corrigida a cor do valor no card de proxima meta para manter `R$ ...` e `/dia` em laranja, sem herdar o cinza global dos spans.

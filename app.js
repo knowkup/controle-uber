@@ -31,6 +31,7 @@ const HISTORICO_KEY = "controleUberFelipeFechamentos";
 let firebaseCarregado = false;
 let salvandoFirebase = false;
 let bloqueiaRestauracaoLocal = false;
+let metaEmEdicaoId = null;
 
 document.getElementById("importarArquivo").addEventListener("change", importarJSON);
 document.getElementById("data").addEventListener("change", atualizarDataPorExtenso);
@@ -50,6 +51,9 @@ document.querySelectorAll('[data-action="salvar-config"]').forEach(botao => {
 document.querySelectorAll('[data-action="cadastrar-meta"]').forEach(botao => {
   botao.addEventListener("click", cadastrarMeta);
 });
+if (document.getElementById("btnCancelarMeta")) {
+  btnCancelarMeta.addEventListener("click", cancelarEdicaoMeta);
+}
 document.getElementById("btnExportar").addEventListener("click", exportarJSON);
 document.getElementById("btnImportar").addEventListener("click", () => document.getElementById("importarArquivo").click());
 document.getElementById("btnLimpar").addEventListener("click", limparDados);
@@ -209,20 +213,51 @@ async function cadastrarMeta() {
   if (!valor) return alert("Informe o valor da meta.");
 
   migrarMetasConfiguradas();
-  config.metas.push({
-    id: gerarId(),
-    nome,
-    valor,
-    objetivo
-  });
+  if (metaEmEdicaoId) {
+    config.metas = config.metas.map(meta => String(meta.id) === String(metaEmEdicaoId)
+      ? { ...meta, nome, valor, objetivo }
+      : meta
+    );
+  } else {
+    config.metas.push({
+      id: gerarId(),
+      nome,
+      valor,
+      objetivo
+    });
+  }
 
-  document.getElementById("metaNome").value = "";
-  document.getElementById("metaValor").value = "";
-  document.getElementById("metaObjetivo").value = "sobrevivencia";
+  resetarFormularioMeta();
 
   preencherCamposConfig();
   render();
   await salvarEstado();
+}
+
+function resetarFormularioMeta() {
+  metaEmEdicaoId = null;
+  document.getElementById("metaNome").value = "";
+  document.getElementById("metaValor").value = "";
+  document.getElementById("metaObjetivo").value = "sobrevivencia";
+  if (document.getElementById("btnSalvarMeta")) btnSalvarMeta.innerText = "Cadastrar meta";
+  if (document.getElementById("btnCancelarMeta")) btnCancelarMeta.classList.add("hidden");
+}
+
+function iniciarEdicaoMeta(id) {
+  migrarMetasConfiguradas();
+  const meta = config.metas.find(item => String(item.id) === String(id));
+  if (!meta) return;
+
+  metaEmEdicaoId = String(meta.id);
+  document.getElementById("metaNome").value = meta.nome;
+  document.getElementById("metaValor").value = moeda(meta.valor);
+  document.getElementById("metaObjetivo").value = objetivoMetaSeguro(meta.objetivo);
+  if (document.getElementById("btnSalvarMeta")) btnSalvarMeta.innerText = "Salvar alterações";
+  if (document.getElementById("btnCancelarMeta")) btnCancelarMeta.classList.remove("hidden");
+}
+
+function cancelarEdicaoMeta() {
+  resetarFormularioMeta();
 }
 
 function limparFormulario() {
@@ -437,7 +472,7 @@ function render() {
   custoPorKmEl().innerText = moeda(custoPorKm);
   lucroPorKmEl().innerText = moeda(lucroPorKm);
 
-  renderizarResumoMetas({ gastoGasolina, gastoSeguro, gastoCustosGerais, gastoParcela });
+  renderizarComposicaoMetas({ gastoGasolina, gastoSeguro, gastoCustosGerais, gastoParcela });
 
   if (document.getElementById("diasTrabalhados")) diasTrabalhados.innerText = diasTrabalhadosValor;
   if (document.getElementById("mediaDia")) mediaDia.innerText = moeda(mediaDiaValor);
@@ -469,25 +504,40 @@ function receitaPorKmEl() { return document.getElementById("receitaPorKm"); }
 function custoPorKmEl() { return document.getElementById("custoPorKm"); }
 function lucroPorKmEl() { return document.getElementById("lucroPorKm"); }
 
-function renderizarResumoMetas(ctx) {
-  const container = document.getElementById("metasCustoResumo");
+function renderizarComposicaoMetas(ctx) {
+  const container = document.getElementById("composicaoMetasLista");
   if (!container) return;
   migrarMetasConfiguradas();
 
   if (!config.metas.length) {
-    container.innerHTML = '<tr><td colspan="3">Nenhuma meta cadastrada</td></tr>';
+    container.innerHTML = '<div class="meta-empty">Nenhuma meta cadastrada ainda.</div>';
     return;
   }
 
-  container.innerHTML = config.metas.map(meta => {
-    const realizado = valorRealizadoMeta(meta, ctx);
-    const saldo = (Number(meta.valor) || 0) - realizado;
+  const grupos = ["sobrevivencia", "estabilidade", "conforto"];
+  container.innerHTML = grupos.map(objetivo => {
+    const metasDoGrupo = config.metas.filter(meta => objetivoMetaSeguro(meta.objetivo) === objetivo);
+    if (!metasDoGrupo.length) return "";
+
     return `
-      <tr>
-        <td>${textoSeguro(meta.nome)}<small class="meta-table-tag">${rotuloObjetivoMeta(meta.objetivo)}</small></td>
-        <td class="valor-metrica">${moeda(meta.valor)}</td>
-        <td class="valor-metrica">${moeda(saldo)}</td>
-      </tr>
+      <section class="composicao-grupo composicao-${objetivo}">
+        <div class="composicao-grupo-titulo">${rotuloObjetivoMeta(objetivo)}</div>
+        <div class="composicao-itens">
+          ${metasDoGrupo.map(meta => {
+            const realizado = valorRealizadoMeta(meta, ctx);
+            const saldo = (Number(meta.valor) || 0) - realizado;
+            return `
+              <div class="composicao-item">
+                <strong>${textoSeguro(meta.nome)}</strong>
+                <div class="composicao-valores">
+                  <span><small>Definido</small>${moeda(meta.valor)}</span>
+                  <span><small>Saldo</small>${moeda(saldo)}</span>
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </section>
     `;
   }).join("");
 }
@@ -509,9 +559,16 @@ function renderizarMetasConfig() {
         <small>${rotuloObjetivoMeta(meta.objetivo)}</small>
       </div>
       <span>${moeda(meta.valor)}</span>
-      <button type="button" class="btn-excluir" data-meta-id="${textoSeguro(meta.id)}">Excluir</button>
+      <div class="meta-config-actions">
+        <button type="button" class="btn-editar" data-meta-edit-id="${textoSeguro(meta.id)}">Editar</button>
+        <button type="button" class="btn-excluir" data-meta-id="${textoSeguro(meta.id)}">Excluir</button>
+      </div>
     </div>
   `).join("");
+
+  container.querySelectorAll("[data-meta-edit-id]").forEach(botao => {
+    botao.addEventListener("click", () => iniciarEdicaoMeta(botao.getAttribute("data-meta-edit-id")));
+  });
 
   container.querySelectorAll("[data-meta-id]").forEach(botao => {
     botao.addEventListener("click", () => excluirMeta(botao.getAttribute("data-meta-id")));
@@ -520,6 +577,7 @@ function renderizarMetasConfig() {
 
 async function excluirMeta(id) {
   config.metas = (Array.isArray(config.metas) ? config.metas : []).filter(meta => String(meta.id) !== String(id));
+  if (String(metaEmEdicaoId) === String(id)) resetarFormularioMeta();
   preencherCamposConfig();
   render();
   await salvarEstado();

@@ -133,25 +133,6 @@
   </div>
 </div>
 
-<div class="card">
-  <h3 class="heading-with-icon"><span class="heading-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"/></svg></span>Metas de Custo</h3>
-
-  <table class="tabela-metas">
-    <thead>
-      <tr>
-        <th>Meta</th>
-        <th>Definido</th>
-        <th>Saldo</th>
-      </tr>
-    </thead>
-    <tbody id="metasCustoResumo"></tbody>
-  </table>
-</div>
-
-
-
-
-
 </div>
 
 
@@ -260,6 +241,11 @@
   </div>
 </div>
 
+<div class="card composicao-metas-card">
+  <h3 class="heading-with-icon"><span class="heading-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"/></svg></span>Composição das Metas</h3>
+  <div class="composicao-metas-lista" id="composicaoMetasLista"></div>
+</div>
+
 <div class="card">
   <h3 class="heading-with-icon"><span class="heading-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M4 19V5"/><path d="M8 17V9"/><path d="M12 17V7"/><path d="M16 17v-5"/><path d="M20 19H4"/></svg></span>Semanas do mês</h3>
   <div class="semana-lista" id="dashSemanasLista"></div>
@@ -356,7 +342,8 @@
     </div>
 
     <div class="meta-form-action">
-      <button type="button" data-action="cadastrar-meta">Cadastrar meta</button>
+      <button type="button" id="btnSalvarMeta" data-action="cadastrar-meta">Cadastrar meta</button>
+      <button type="button" class="secundario hidden" id="btnCancelarMeta">Cancelar</button>
     </div>
   </div>
 
