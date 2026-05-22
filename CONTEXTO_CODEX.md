@@ -76,6 +76,8 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
 
 ## Mudancas recentes
 
+- Em 2026-05-22, adicionada configuracao de tipo de veiculo (`Combustao` ou `Eletrico`) para trocar nomenclaturas de gasolina/litros/combustivel por recarga/kWh/energia sem duplicar a logica de lancamentos.
+- Backup criado antes da configuracao de tipo de veiculo: `20260522-151920`.
 - Em 2026-05-22, reorganizada a Operacao do Carro em tres grupos de duas metricas: Desempenho, Eficiencia e Combustivel, melhorando a leitura mobile.
 - Backup criado antes da reorganizacao dos grupos da operacao: `20260522-151920`.
 - Em 2026-05-22, refinada a aba Inicio com cores premium por tipo no Resumo Financeiro, reorganizada Operacao do Carro por KM, eficiencia e combustivel, e alinhado o Historico para visual claro premium.

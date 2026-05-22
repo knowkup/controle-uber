@@ -22,6 +22,7 @@ let config = {
   metaParcela: 0,
   diasPlanejados: 0,
   metaConsistente: 0,
+  tipoVeiculo: "combustao",
   metas: []
 };
 
@@ -53,6 +54,13 @@ document.querySelectorAll('[data-action="cadastrar-meta"]').forEach(botao => {
 });
 if (document.getElementById("btnCancelarMeta")) {
   btnCancelarMeta.addEventListener("click", cancelarEdicaoMeta);
+}
+if (document.getElementById("tipoVeiculo")) {
+  tipoVeiculo.addEventListener("change", () => {
+    config.tipoVeiculo = tipoVeiculoSeguro(tipoVeiculo.value);
+    atualizarRotulosVeiculo();
+    selecionar(tipo);
+  });
 }
 document.getElementById("btnExportar").addEventListener("click", exportarJSON);
 document.getElementById("btnImportar").addEventListener("click", () => document.getElementById("importarArquivo").click());
@@ -104,6 +112,7 @@ function trocarAba(aba) {
 
 function selecionar(novoTipo) {
   tipo = novoTipo;
+  const rotulos = rotulosVeiculo();
 
   ["btnGanho", "btnGasolina", "btnDespesas", "btnKM"].forEach(id => {
     document.getElementById(id).classList.remove("ativo");
@@ -121,7 +130,7 @@ function selecionar(novoTipo) {
 
   if (tipo === "gasolina") {
     btnGasolina.classList.add("ativo");
-    labelValor.innerText = "Valor da gasolina";
+    labelValor.innerText = rotulos.valorEnergia;
     valor.placeholder = "Ex: R$ 250,00";
     campoLitros.classList.remove("hidden");
   }
@@ -140,6 +149,7 @@ function selecionar(novoTipo) {
 }
 
 async function adicionar() {
+  const rotulos = rotulosVeiculo();
   const data = document.getElementById("data").value;
   const valorCampo = document.getElementById("valor").value;
   const litrosCampo = document.getElementById("litros").value;
@@ -159,9 +169,9 @@ async function adicionar() {
   }
 
   if (tipo === "gasolina") {
-    if (!valorCampo) return alert("Informe o valor da gasolina");
-    if (!litrosCampo) return alert("Informe os litros abastecidos");
-    descricao = "Gasolina";
+    if (!valorCampo) return alert(rotulos.alertaValorEnergia);
+    if (!litrosCampo) return alert(rotulos.alertaQuantidadeEnergia);
+    descricao = rotulos.descricaoEnergia;
     valorLancamento = Math.abs(valorLancamento) * -1;
   }
 
@@ -197,6 +207,7 @@ async function adicionar() {
 async function salvarConfiguracoes() {
   config.saldoInicial = parseMoeda(saldoInicial.value);
   config.diasPlanejados = parseInt(diasPlanejados.value) || 0;
+  config.tipoVeiculo = tipoVeiculoSeguro(document.getElementById("tipoVeiculo")?.value);
   migrarMetasConfiguradas();
 
   preencherCamposConfig();
@@ -292,6 +303,74 @@ function rotuloObjetivoMeta(valor) {
   return "Sobrevivência";
 }
 
+function tipoVeiculoSeguro(valor) {
+  return valor === "eletrico" ? "eletrico" : "combustao";
+}
+
+function rotulosVeiculo(configBase = config) {
+  const eletrico = tipoVeiculoSeguro(configBase.tipoVeiculo) === "eletrico";
+  return eletrico
+    ? {
+        acaoEnergia: "Recarga",
+        valorEnergia: "Valor da recarga",
+        quantidadeEnergia: "kWh carregados",
+        quantidadeCurta: "kWh",
+        placeholderQuantidade: "Ex: 42,5",
+        grupoEnergia: "Energia",
+        gastoEnergia: "Gasto com energia",
+        descricaoEnergia: "Energia",
+        metaEnergia: "Ex: Energia",
+        alertaValorEnergia: "Informe o valor da recarga",
+        alertaQuantidadeEnergia: "Informe os kWh carregados",
+        resumoQuantidadeHistorico: "kWh"
+      }
+    : {
+        acaoEnergia: "Gasolina",
+        valorEnergia: "Valor da gasolina",
+        quantidadeEnergia: "Litros abastecidos",
+        quantidadeCurta: "Litros",
+        placeholderQuantidade: "Ex: 42,5",
+        grupoEnergia: "Combustível",
+        gastoEnergia: "Gasto com gasolina",
+        descricaoEnergia: "Gasolina",
+        metaEnergia: "Ex: Gasolina",
+        alertaValorEnergia: "Informe o valor da gasolina",
+        alertaQuantidadeEnergia: "Informe os litros abastecidos",
+        resumoQuantidadeHistorico: "litros"
+      };
+}
+
+function ehLancamentoEnergia(item) {
+  return item?.tipo === "gasolina" || item?.descricao === "Gasolina" || item?.descricao === "Energia";
+}
+
+function descricaoVisivelLancamento(item) {
+  return ehLancamentoEnergia(item) ? rotulosVeiculo().descricaoEnergia : item.descricao;
+}
+
+function atualizarRotulosVeiculo() {
+  const rotulos = rotulosVeiculo();
+  const botaoEnergia = document.querySelector("#btnGasolina .botao-main");
+  if (botaoEnergia) botaoEnergia.innerText = rotulos.acaoEnergia;
+
+  const labelQuantidade = document.querySelector("#campoLitros label");
+  if (labelQuantidade) labelQuantidade.innerText = rotulos.quantidadeEnergia;
+  const campoQuantidade = document.getElementById("litros");
+  if (campoQuantidade) campoQuantidade.placeholder = rotulos.placeholderQuantidade;
+
+  const grupoEnergia = document.querySelector(".operacao-combustivel-grid")?.closest(".operacao-grupo")?.querySelector(".operacao-grupo-titulo");
+  if (grupoEnergia) grupoEnergia.innerText = rotulos.grupoEnergia;
+  const totalEnergiaLabel = document.getElementById("litrosTotal")?.closest(".resumo-item")?.querySelector("span");
+  if (totalEnergiaLabel) totalEnergiaLabel.innerText = rotulos.quantidadeEnergia;
+  const gastoEnergiaLabel = document.getElementById("gastoGasolina")?.closest(".resumo-item")?.querySelector("span");
+  if (gastoEnergiaLabel) gastoEnergiaLabel.innerText = rotulos.gastoEnergia;
+
+  const metaNome = document.getElementById("metaNome");
+  if (metaNome) metaNome.placeholder = rotulos.metaEnergia;
+  const quantidadeHistorico = document.querySelector(".historico-table th:nth-child(4)");
+  if (quantidadeHistorico) quantidadeHistorico.innerText = rotulos.quantidadeCurta;
+}
+
 function normalizarMetasConfig() {
   config.metas = (Array.isArray(config.metas) ? config.metas : [])
     .map(meta => ({
@@ -311,7 +390,7 @@ function migrarMetasConfiguradas() {
   }
 
   const antigas = [
-    { nome: "Gasolina", valor: Number(config.metaGasolina) || 0, objetivo: "sobrevivencia" },
+    { nome: rotulosVeiculo().descricaoEnergia, valor: Number(config.metaGasolina) || 0, objetivo: "sobrevivencia" },
     { nome: "Seguro", valor: Number(config.metaSeguro) || 0, objetivo: "sobrevivencia" },
     { nome: "Custos gerais", valor: Number(config.metaCustosGerais) || 0, objetivo: "sobrevivencia" },
     { nome: "Sobra desejada", valor: Number(config.metaConsistente) || 0, objetivo: "estabilidade" },
@@ -357,7 +436,7 @@ function totaisMetasConfig(configBase = config) {
 
 function valorRealizadoMeta(meta, ctx) {
   const nome = String(meta.nome || "").toLowerCase();
-  if (nome.includes("gasolina")) return ctx.gastoGasolina || 0;
+  if (nome.includes("gasolina") || nome.includes("combust") || nome.includes("energia") || nome.includes("recarga")) return ctx.gastoGasolina || 0;
   if (nome.includes("seguro")) return ctx.gastoSeguro || 0;
   if (nome.includes("parcela")) return ctx.gastoParcela || 0;
   if (nome.includes("custo")) return ctx.gastoCustosGerais || 0;
@@ -366,6 +445,7 @@ function valorRealizadoMeta(meta, ctx) {
 
 function render() {
   migrarMetasConfiguradas();
+  atualizarRotulosVeiculo();
   tabela.innerHTML = "";
 
   let entradas = 0;
@@ -400,13 +480,13 @@ function render() {
       if (d.litros) litrosTotal += d.litros;
       if (d.km) kms.push(d.km);
 
-      if (d.descricao === "Gasolina") gastoGasolina += Math.abs(d.valor);
+      if (ehLancamentoEnergia(d)) gastoGasolina += Math.abs(d.valor);
       if (d.descricao === "Seguro") gastoSeguro += Math.abs(d.valor);
       if (d.descricao === "Parcela") gastoParcela += Math.abs(d.valor);
 
       if (
         d.valor < 0 &&
-        d.descricao !== "Gasolina" &&
+        !ehLancamentoEnergia(d) &&
         d.descricao !== "Seguro" &&
         d.descricao !== "Parcela"
       ) {
@@ -423,11 +503,11 @@ function render() {
 
     tr.innerHTML = `
       <td data-label="Data">${formatarData(d.data)}</td>
-      <td data-label="Descrição"><span class="launch-row"><span class="launch-icon ${classeIconeLancamento(d)}">${svgIconeLancamento(d)}</span><span>${textoSeguro(d.descricao)}</span></span></td>
+      <td data-label="Descrição"><span class="launch-row"><span class="launch-icon ${classeIconeLancamento(d)}">${svgIconeLancamento(d)}</span><span>${textoSeguro(descricaoVisivelLancamento(d))}</span></span></td>
       <td data-label="Valor" class="${d.valor > 0 ? "positivo" : d.valor < 0 ? "negativo" : ""}">
         ${d.valor === 0 ? "-" : moeda(d.valor)}
       </td>
-      <td data-label="Litros">${d.litros ? numero(d.litros) : "-"}</td>
+      <td data-label="${rotulosVeiculo().quantidadeCurta}">${d.litros ? numero(d.litros) : "-"}</td>
       <td data-label="KM">${d.km || "-"}</td>
       <td data-label="Ação"></td>
     `;
@@ -641,7 +721,7 @@ function calcularResumoDoMes(mesKey, listaDados, configBase = config, status = "
     if (valor < 0) saidas += valor;
     if (d.litros) litrosTotal += Number(d.litros) || 0;
     if (d.km) kms.push(Number(d.km) || 0);
-    if (d.descricao === "Gasolina") gastoGasolina += Math.abs(valor);
+    if (ehLancamentoEnergia(d)) gastoGasolina += Math.abs(valor);
   });
 
   const kmRodado = kms.length > 1 ? Math.max(...kms) - Math.min(...kms) : 0;
@@ -759,6 +839,8 @@ function renderizarHistoricoMensal(ctx = {}) {
     const statusLabel = resumo.metaAtingida || "Sem meta";
     const statusTexto = statusLabel === "Abaixo da mínima" ? "Abaixo da mínima" : `Faixa ${statusLabel.toLowerCase()}`;
 
+    const rotulosHistorico = rotulosVeiculo(resumo.config || config);
+
     const card = document.createElement("div");
     card.className = `month-card-premium ${statusClasse} ${metaClasse}`;
     card.innerHTML = `
@@ -794,7 +876,7 @@ function renderizarHistoricoMensal(ctx = {}) {
         <div class="month-kpi-grid">
           <div class="month-kpi"><span>Entradas</span><strong class="positivo">${moeda(resumo.entradas)}</strong><small>Ganhos Uber</small></div>
           <div class="month-kpi"><span>Saídas</span><strong class="negativo">${moeda(saidasAbs)}</strong><small>Custos lançados</small></div>
-          <div class="month-kpi"><span>KM rodado</span><strong>${Math.round(resumo.kmRodado || 0).toLocaleString("pt-BR")}</strong><small>${numero(resumo.litrosTotal || 0)} litros</small></div>
+          <div class="month-kpi"><span>KM rodado</span><strong>${Math.round(resumo.kmRodado || 0).toLocaleString("pt-BR")}</strong><small>${numero(resumo.litrosTotal || 0)} ${rotulosHistorico.resumoQuantidadeHistorico}</small></div>
           <div class="month-kpi"><span>Lucro/KM</span><strong>${moeda(resumo.lucroPorKm)}</strong><small>Resultado operacional por km</small></div>
         </div>
       </div>
@@ -1105,7 +1187,7 @@ function renderizarSemanas(semanas, metaSemanal) {
 
 function classeIconeLancamento(item) {
   if (item.tipo === "ganho" || item.descricao === "Ganhos Uber") return "ganho-icon";
-  if (item.tipo === "gasolina" || item.descricao === "Gasolina") return "gasolina-icon";
+  if (ehLancamentoEnergia(item)) return "gasolina-icon";
   if (item.tipo === "km" || item.descricao === "Atualização de KM") return "km-icon";
   return "despesa-icon";
 }
@@ -1114,7 +1196,7 @@ function svgIconeLancamento(item) {
   if (item.tipo === "ganho" || item.descricao === "Ganhos Uber") {
     return '<svg class="icon" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>';
   }
-  if (item.tipo === "gasolina" || item.descricao === "Gasolina") {
+  if (ehLancamentoEnergia(item)) {
     return '<svg class="icon" viewBox="0 0 24 24"><path d="M4 20V6a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v14"/><path d="M4 10h11"/><path d="M15 7h2l3 3v7a2 2 0 0 1-2 2h-1"/></svg>';
   }
   if (item.tipo === "km" || item.descricao === "Atualização de KM") {
@@ -1163,6 +1245,7 @@ function normalizarConfigAtual() {
   config.metaParcela = Number(config.metaParcela) || 0;
   config.diasPlanejados = Number(config.diasPlanejados) || 0;
   config.metaConsistente = Number(config.metaConsistente) || 0;
+  config.tipoVeiculo = tipoVeiculoSeguro(config.tipoVeiculo);
   migrarMetasConfiguradas();
 }
 
@@ -1259,6 +1342,8 @@ function definirDataHoje() {
 function preencherCamposConfig() {
   saldoInicial.value = config.saldoInicial ? moeda(config.saldoInicial) : "";
   diasPlanejados.value = config.diasPlanejados || "";
+  if (document.getElementById("tipoVeiculo")) tipoVeiculo.value = tipoVeiculoSeguro(config.tipoVeiculo);
+  atualizarRotulosVeiculo();
   renderizarMetasConfig();
 }
 
@@ -1463,6 +1548,7 @@ async function limparDados() {
     metaParcela: 0,
     diasPlanejados: 0,
     metaConsistente: 0,
+    tipoVeiculo: "combustao",
     metas: []
   };
   fechamentos = {};
