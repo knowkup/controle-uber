@@ -762,6 +762,7 @@ input[type="date"] {
 .kpi-card .daily-value {
   display: inline;
   font: inherit;
+  color: inherit;
   letter-spacing: 0;
   text-transform: none;
 }
@@ -769,7 +770,7 @@ input[type="date"] {
 .kpi-card .daily-unit {
   display: inline;
   margin-left: 2px;
-  color: currentColor;
+  color: inherit;
   font-size: 19px;
   font-weight: 650;
   letter-spacing: 0;

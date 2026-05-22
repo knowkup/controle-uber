@@ -76,6 +76,8 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
 
 ## Mudancas recentes
 
+- Em 2026-05-22, corrigida a cor do valor no card de proxima meta para manter `R$ ...` e `/dia` em laranja, sem herdar o cinza global dos spans.
+- Backup criado antes da correcao da cor do valor/dia: `20260522-120618`.
 - Em 2026-05-22, corrigido apenas o `/dia` do card de proxima meta: mantido na mesma linha do valor, em minusculo, com fonte menor e sem herdar caixa alta.
 - Backup criado antes da correcao do `/dia`: `20260522-120223`.
 - Em 2026-05-22, ajustado o visual acordado da Dashboard: topo claro premium com fundo aurora, card de valor/dia retomado em laranja com `/dia` menor ao lado do valor e velocimetro substituido por regua horizontal proporcional com marcador de projecao.
