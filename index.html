@@ -104,30 +104,40 @@
   <div class="card">
     <h3 class="heading-with-icon"><span class="heading-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M5 16h14"/><path d="M7 16l1.2-5.2A3 3 0 0 1 11.1 8h1.8a3 3 0 0 1 2.9 2.8L17 16"/><path d="M7 16v2"/><path d="M17 16v2"/></svg></span>Operação do Carro</h3>
 
-    <div class="resumo-grid">
-      <div class="resumo-item">
+    <div class="resumo-grid operacao-grid">
+      <div class="resumo-item operacao-km">
         <span>KM rodados</span>
         <strong id="kmRodado">0</strong>
       </div>
-      <div class="resumo-item">
-        <span>Litros abastecidos</span>
-        <strong id="litrosTotal">0,00</strong>
+      <div class="operacao-grupo">
+        <div class="operacao-grupo-titulo">Efici&ecirc;ncia</div>
+        <div class="operacao-mini-grid">
+          <div class="resumo-item operacao-receita">
+            <span>Receita por KM</span>
+            <strong id="receitaPorKm">R$ 0,00</strong>
+          </div>
+          <div class="resumo-item operacao-custo">
+            <span>Custo por KM</span>
+            <strong id="custoPorKm">R$ 0,00</strong>
+          </div>
+          <div class="resumo-item operacao-lucro">
+            <span>Lucro por KM</span>
+            <strong id="lucroPorKm">R$ 0,00</strong>
+          </div>
+        </div>
       </div>
-      <div class="resumo-item">
-        <span>Gasto com gasolina</span>
-        <strong id="gastoGasolina">R$ 0,00</strong>
-      </div>
-      <div class="resumo-item">
-        <span>Receita por KM</span>
-        <strong id="receitaPorKm">R$ 0,00</strong>
-      </div>
-      <div class="resumo-item">
-        <span>Custo por KM</span>
-        <strong id="custoPorKm">R$ 0,00</strong>
-      </div>
-      <div class="resumo-item">
-        <span>Lucro por KM</span>
-        <strong id="lucroPorKm">R$ 0,00</strong>
+      <div class="operacao-grupo">
+        <div class="operacao-grupo-titulo">Combust&iacute;vel</div>
+        <div class="operacao-mini-grid operacao-combustivel-grid">
+          <div class="resumo-item operacao-litros">
+            <span>Litros abastecidos</span>
+            <strong id="litrosTotal">0,00</strong>
+          </div>
+          <div class="resumo-item operacao-gasolina">
+            <span>Gasto com gasolina</span>
+            <strong id="gastoGasolina">R$ 0,00</strong>
+          </div>
+        </div>
       </div>
     </div>
   </div>
