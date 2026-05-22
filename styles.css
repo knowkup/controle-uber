@@ -479,34 +479,58 @@ input[type="date"] {
 }
 
 .meta-card {
-  background: #fbfaf7;
-  border: 1px solid #efebe2;
-  border-radius: 12px;
-  padding: 14px;
-  min-height: 118px;
+  --meta-color: var(--green);
+  --meta-soft: var(--green-soft);
+  --meta-border: #bddfc6;
+  background: linear-gradient(180deg, rgba(255,255,255,0.84), rgba(255,255,255,0.5)), var(--meta-soft);
+  border: 1px solid var(--meta-border);
+  border-radius: 14px;
+  padding: 16px;
+  min-height: 196px;
+  color: var(--meta-color);
+  box-shadow: 0 10px 22px rgba(25, 27, 31, 0.045);
+}
+
+.meta-card.meta-sobrevivencia {
+  --meta-color: #159447;
+  --meta-soft: #eef9f1;
+  --meta-border: #c9ead2;
+}
+
+.meta-card.meta-estabilidade {
+  --meta-color: #dd7900;
+  --meta-soft: #fff6e8;
+  --meta-border: #f4d7aa;
+}
+
+.meta-card.meta-conforto {
+  --meta-color: #dc3f3f;
+  --meta-soft: #fff0ef;
+  --meta-border: #f1c4c0;
 }
 
 .meta-card .meta-nome {
   font-size: 12px;
-  font-weight: 610;
-  color: var(--muted);
+  font-weight: 760;
+  color: var(--meta-color);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.045em;
 }
 
 .meta-card .meta-percent {
-  font-size: 34px;
-  font-weight: 780;
+  font-size: 38px;
+  font-weight: 820;
   letter-spacing: 0;
-  margin-top: 8px;
+  margin-top: 12px;
   line-height: 1;
+  color: var(--meta-color);
 }
 
 .meta-progress-bar {
-  margin-top: 12px;
-  height: 9px;
+  margin-top: 14px;
+  height: 10px;
   border-radius: 999px;
-  background: rgba(15, 23, 42, 0.09);
+  background: rgba(15, 23, 42, 0.08);
   overflow: hidden;
 }
 
@@ -514,22 +538,22 @@ input[type="date"] {
   width: 0%;
   height: 100%;
   border-radius: 999px;
-  background: currentColor;
+  background: var(--meta-color);
   transition: width 0.25s ease;
 }
 
 .meta-progress-text {
-  margin-top: 9px;
+  margin-top: 12px;
   color: var(--muted);
   font-size: 12px;
   font-weight: 570;
 }
 
 .meta-card .meta-action {
-  margin-top: 6px;
+  margin-top: 13px;
   font-size: 13px;
   font-weight: 640;
-  color: var(--muted);
+  color: var(--text);
 }
 
 .meta-card .meta-status {
@@ -539,35 +563,14 @@ input[type="date"] {
   color: var(--muted);
 }
 
-.meta-card.ok {
-  background: var(--green-soft);
-  border-color: #bddfc6;
-  color: var(--green);
-}
-
-.meta-card.ok .meta-action { color: var(--green); }
-
-.meta-card.alerta {
-  background: var(--orange-soft);
-  border-color: #e8c7a3;
-  color: var(--orange);
-}
-
-.meta-card.alerta .meta-action { color: var(--orange); }
-
-.meta-card.longe {
-  background: var(--red-soft);
-  border-color: #e9bebc;
-  color: var(--red);
-}
-
-.meta-card.longe .meta-action { color: var(--red); }
-
 .meta-card .meta-nome,
 .meta-card .meta-progress-text { color: var(--muted); }
 
+.meta-card .meta-nome { color: var(--meta-color); }
+
 .ritmo-mes-card {
   overflow: hidden;
+  background: linear-gradient(180deg, #fffdf9, #f8f6f1);
 }
 
 .ritmo-meter {
@@ -598,13 +601,13 @@ input[type="date"] {
   position: absolute;
   left: 50%;
   bottom: 0;
-  width: 4px;
-  height: 39%;
+  width: 2px;
+  height: 54%;
   border-radius: 999px;
   background: #111827;
   transform-origin: 50% 100%;
   transform: translateX(-50%) rotate(var(--pointer-angle));
-  box-shadow: 0 5px 16px rgba(15, 23, 42, 0.18);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.16);
   transition: transform 0.25s ease;
 }
 
@@ -612,13 +615,13 @@ input[type="date"] {
   content: "";
   position: absolute;
   left: 50%;
-  bottom: -7px;
-  width: 18px;
-  height: 18px;
+  bottom: -8px;
+  width: 17px;
+  height: 17px;
   border-radius: 999px;
   background: #111827;
   transform: translateX(-50%);
-  border: 3px solid #fff;
+  border: 4px solid #fff;
 }
 
 .ritmo-tick {
@@ -652,11 +655,11 @@ input[type="date"] {
   margin-top: 12px;
   padding: 12px 13px;
   border-radius: 12px;
-  background: #fbfaf7;
+  background: #fff;
   border: 1px solid #efebe2;
   color: var(--text);
   font-size: 14px;
-  font-weight: 560;
+  font-weight: 650;
   line-height: 1.4;
 }
 
@@ -665,6 +668,36 @@ input[type="date"] {
   border: 1px solid #efebe2;
   border-radius: 12px;
   padding: 16px;
+}
+
+.ritmo-atual-card,
+.semana-atual-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(250,248,244,0.9));
+}
+
+.ritmo-atual-card .dashboard-grid-2,
+.semana-atual-card .dashboard-grid-2 {
+  gap: 14px;
+}
+
+.kpi-media {
+  background: linear-gradient(180deg, #f7fbff, #eef6ff);
+  border-color: #d5e6f7;
+}
+
+.kpi-proxima {
+  background: linear-gradient(180deg, #fffaf1, #fff3df);
+  border-color: #efd6ad;
+}
+
+.kpi-semana-executado {
+  background: linear-gradient(180deg, #f7fbff, #edf6ff);
+  border-color: #d5e6f7;
+}
+
+.kpi-semana-ritmo {
+  background: linear-gradient(180deg, #fffaf2, #fff4e3);
+  border-color: #efd9b8;
 }
 
 .kpi-card span {
@@ -679,10 +712,17 @@ input[type="date"] {
 .kpi-card strong {
   display: block;
   margin-top: 8px;
-  font-size: 28px;
+  font-size: 30px;
   letter-spacing: 0;
-  font-weight: 760;
+  font-weight: 820;
+  color: var(--text);
 }
+
+.kpi-proxima strong,
+.kpi-semana-ritmo strong { color: var(--orange); }
+
+.kpi-media strong,
+.kpi-semana-executado strong { color: var(--blue); }
 
 .kpi-card p {
   margin: 8px 0 0;
@@ -729,7 +769,14 @@ input[type="date"] {
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  margin-top: 4px;
+  margin-top: 5px;
+  line-height: 1.25;
+}
+
+.meta-progress-text .meta-line strong {
+  color: var(--text);
+  font-weight: 720;
+  text-align: right;
 }
 
 .meta-state {
@@ -737,6 +784,56 @@ input[type="date"] {
   color: var(--muted);
   font-size: 13px;
   line-height: 1.35;
+}
+
+.meta-action-panel {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 11px;
+  border-radius: 13px;
+  background: var(--meta-soft);
+  border: 1px solid var(--meta-border);
+  background: color-mix(in srgb, var(--meta-soft) 72%, white);
+  border: 1px solid color-mix(in srgb, var(--meta-border) 76%, white);
+}
+
+.meta-action-icon {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.72);
+  color: var(--meta-color);
+}
+
+.meta-action-icon svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.meta-action-panel strong {
+  display: block;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.meta-action-panel small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 520;
+  line-height: 1.25;
 }
 
 

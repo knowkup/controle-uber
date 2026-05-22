@@ -218,7 +218,7 @@
 </div>
 
 <div class="dashboard-grid-3">
-  <div class="meta-card" id="cardMetaMinima">
+  <div class="meta-card meta-sobrevivencia" id="cardMetaMinima">
     <div class="meta-nome">Sobrevivência</div>
     <div class="meta-percent" id="dashPctMinima">0%</div>
     <div class="meta-progress-bar"><div class="meta-progress-fill" id="dashBarMinima"></div></div>
@@ -226,7 +226,7 @@
     <div class="meta-action" id="dashAcaoMinima">Configure as metas</div>
   </div>
 
-  <div class="meta-card" id="cardMetaConsistente">
+  <div class="meta-card meta-estabilidade" id="cardMetaConsistente">
     <div class="meta-nome">Estabilidade</div>
     <div class="meta-percent" id="dashPctConsistente">0%</div>
     <div class="meta-progress-bar"><div class="meta-progress-fill" id="dashBarConsistente"></div></div>
@@ -234,7 +234,7 @@
     <div class="meta-action" id="dashAcaoConsistente">Configure em ajustes</div>
   </div>
 
-  <div class="meta-card" id="cardMetaIdeal">
+  <div class="meta-card meta-conforto" id="cardMetaIdeal">
     <div class="meta-nome">Conforto</div>
     <div class="meta-percent" id="dashPctIdeal">0%</div>
     <div class="meta-progress-bar"><div class="meta-progress-fill" id="dashBarIdeal"></div></div>
@@ -244,32 +244,32 @@
 </div>
 
 <div class="dashboard-grid-2">
-  <div class="card">
+  <div class="card ritmo-atual-card">
     <h3 class="heading-with-icon"><span class="heading-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M4 19V5"/><path d="M4 19h16"/><path d="m7 15 4-4 3 3 5-7"/></svg></span>Ritmo</h3>
     <div class="dashboard-grid-2">
-      <div class="kpi-card">
+      <div class="kpi-card kpi-media">
         <span>Média atual</span>
         <strong id="dashMediaDia">R$ 0,00</strong>
         <p id="dashMediaSub">por dia trabalhado</p>
       </div>
-      <div class="kpi-card">
-        <span id="dashProximaMetaLabel">Próxima meta</span>
-        <strong id="dashMetaAjustada">R$ 0,00</strong>
+      <div class="kpi-card kpi-proxima">
+        <span id="dashProximaMetaLabel">Para alcançar estabilidade</span>
+        <strong id="dashMetaAjustada">R$ 0,00/dia</strong>
         <p>por dia restante planejado</p>
       </div>
     </div>
   </div>
 
-  <div class="card">
+  <div class="card semana-atual-card">
     <h3 class="heading-with-icon"><span class="heading-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><path d="M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="2"/></svg></span>Semana atual</h3>
     <div class="dashboard-grid-2">
-      <div class="kpi-card">
-        <span>Meta semanal</span>
-        <strong id="dashMetaSemana">R$ 0,00</strong>
-        <p id="dashSemanaExecutado">Executado semanal: R$ 0,00</p>
+      <div class="kpi-card kpi-semana-executado">
+        <span>Executado semanal</span>
+        <strong id="dashSemanaExecutadoValor">R$ 0,00</strong>
+        <p id="dashMetaSemana">Meta semanal: R$ 0,00</p>
       </div>
-      <div class="kpi-card">
-        <span>Percentual semanal</span>
+      <div class="kpi-card kpi-semana-ritmo">
+        <span id="dashSemanaLabel">Ritmo da semana</span>
         <strong id="dashSemanaStatus">0%</strong>
         <p id="dashSemanaFalta">Aguardando meta consistente</p>
       </div>

@@ -631,13 +631,22 @@ function proximaMetaAtiva(valor, sobrevivencia, estabilidade, conforto) {
 function posicaoRitmo(projecao, sobrevivencia, estabilidade, conforto) {
   if (conforto > 0 && projecao >= conforto) return 100;
   if (estabilidade > 0 && projecao >= estabilidade && conforto > estabilidade) {
-    return 66 + ((projecao - estabilidade) / (conforto - estabilidade)) * 34;
+    return 70 + ((projecao - estabilidade) / (conforto - estabilidade)) * 30;
   }
   if (sobrevivencia > 0 && projecao >= sobrevivencia && estabilidade > sobrevivencia) {
-    return 33 + ((projecao - sobrevivencia) / (estabilidade - sobrevivencia)) * 33;
+    return 34 + ((projecao - sobrevivencia) / (estabilidade - sobrevivencia)) * 36;
   }
-  if (sobrevivencia > 0) return (projecao / sobrevivencia) * 33;
+  if (sobrevivencia > 0) return (projecao / sobrevivencia) * 34;
   return 0;
+}
+
+function metaIcone(nome) {
+  const icons = {
+    Minima: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>',
+    Consistente: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>',
+    Ideal: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v18"/><path d="M6 4h11l-2 4 2 4H6"/></svg>'
+  };
+  return icons[nome] || icons.Minima;
 }
 
 function atualizarDashboard(ctx) {
@@ -705,9 +714,9 @@ function atualizarDashboard(ctx) {
   if (proximaMeta) {
     const valorDiaNecessario = diasRestantes > 0 ? Math.max((proximaMeta.valor - entradas) / diasRestantes, 0) : 0;
     metaAjustadaCard.style.display = "";
-    dashProximaMetaLabel.innerText = "Próxima meta";
-    dashMetaAjustada.innerText = moeda(valorDiaNecessario);
-    dashMetaAjustada.parentElement.querySelector("p").innerText = `${proximaMeta.acao} · ${proximaMeta.nome} · ${diasRestantes} dia(s) restantes`;
+    dashProximaMetaLabel.innerText = proximaMeta.acao;
+    dashMetaAjustada.innerText = `${moeda(valorDiaNecessario)}/dia`;
+    dashMetaAjustada.parentElement.querySelector("p").innerText = `${proximaMeta.nome} · ${diasRestantes} dia(s) restantes`;
   } else {
     metaAjustadaCard.style.display = "none";
   }
@@ -719,9 +728,10 @@ function atualizarDashboard(ctx) {
   const ganhoSemanaAtual = semanaAtual.valor || 0;
   const percSemana = metaSemanal > 0 ? Math.min((ganhoSemanaAtual / metaSemanal) * 100, 999) : 0;
 
-  if (document.getElementById("dashMetaSemana")) dashMetaSemana.innerText = moeda(metaSemanal);
-  if (document.getElementById("dashSemanaExecutado")) dashSemanaExecutado.innerText = `Executado semanal: ${moeda(ganhoSemanaAtual)}`;
+  if (document.getElementById("dashSemanaExecutadoValor")) dashSemanaExecutadoValor.innerText = moeda(ganhoSemanaAtual);
+  if (document.getElementById("dashMetaSemana")) dashMetaSemana.innerText = `Meta semanal: ${moeda(metaSemanal)}`;
   dashSemanaStatus.innerText = `${Math.round(percSemana)}%`;
+  if (document.getElementById("dashSemanaLabel")) dashSemanaLabel.innerText = `${Math.round(percSemana)}% da meta semanal`;
 
   if (metaSemanal > 0) {
     const faltaSemana = Math.max(metaSemanal - ganhoSemanaAtual, 0);
@@ -749,7 +759,7 @@ function atualizarMetaCard(nome, rotulo, meta, atual, projetado) {
     pctEl.innerText = "—";
     barEl.style.width = "0%";
     progressoEl.innerHTML = `<div class="meta-line"><span>Executado</span><strong>${moeda(atual)}</strong></div><div class="meta-line"><span>Projeção</span><strong>${moeda(projetado || 0)}</strong></div>`;
-    acaoEl.innerText = "Configure esta meta";
+    acaoEl.innerHTML = `<div class="meta-action-panel"><span class="meta-action-icon">${metaIcone(nome)}</span><span><strong>Meta não configurada</strong><small>Configure esta meta para acompanhar o ritmo.</small></span></div>`;
     card.classList.add("alerta");
     return;
   }
@@ -769,10 +779,10 @@ function atualizarMetaCard(nome, rotulo, meta, atual, projetado) {
   `;
 
   if (faltaAtual <= 0) {
-    acaoEl.innerHTML = `<div class="meta-state"><strong>${rotulo} alcançada</strong><br>+${moeda(acima)} acima da meta</div>`;
+    acaoEl.innerHTML = `<div class="meta-action-panel"><span class="meta-action-icon">${metaIcone(nome)}</span><span><strong>${rotulo} alcançada</strong><small>+${moeda(acima)} acima da meta</small></span></div>`;
     card.classList.add("ok");
   } else {
-    acaoEl.innerText = `Faltam ${moeda(faltaAtual)}`;
+    acaoEl.innerHTML = `<div class="meta-action-panel"><span class="meta-action-icon">${metaIcone(nome)}</span><span><strong>${moeda(faltaAtual)} restantes</strong><small>${rotulo} em andamento</small></span></div>`;
     card.classList.add(percentualExecutado >= 70 ? "alerta" : "longe");
   }
 }

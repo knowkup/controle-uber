@@ -76,6 +76,8 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
 
 ## Mudancas recentes
 
+- Em 2026-05-22, refinada a Dashboard sem reconstruir estrutura: ponteiro do ritmo mais fino/longo e calibrado visualmente, cards das metas com cores suaves por objetivo, blocos inferiores com icones outline, bloco Ritmo com melhor hierarquia e Semana Atual com executado semanal como foco principal.
+- Backup criado antes do refinamento visual da Dashboard: `20260522-105420`.
 - Em 2026-05-22, reforcada a regra operacional: alteracao de codigo deve terminar com validacao, commit e push para permitir validacao em producao.
 - Em 2026-05-22, ajustada a Dashboard com foco mobile: bloco `Ritmo do Mes`, ponteiro real baseado na projecao, metas Sobrevivencia/Estabilidade/Conforto, separacao de Executado/Projecao e semana atual pela proxima meta ativa.
 - Backup criado antes da alteracao da Dashboard: `20260522-102833`.
