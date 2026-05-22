@@ -629,15 +629,19 @@ function proximaMetaAtiva(valor, sobrevivencia, estabilidade, conforto) {
 }
 
 function posicaoRitmo(projecao, sobrevivencia, estabilidade, conforto) {
-  if (conforto > 0 && projecao >= conforto) return 100;
-  if (estabilidade > 0 && projecao >= estabilidade && conforto > estabilidade) {
-    return 70 + ((projecao - estabilidade) / (conforto - estabilidade)) * 30;
+  const pontos = [0, sobrevivencia, estabilidade, conforto].map(valor => Number(valor) || 0);
+  const maiorMeta = Math.max(...pontos, 1);
+  const escala = pontos.map(valor => Math.max(0, Math.min((valor / maiorMeta) * 100, 100)));
+  if (projecao >= conforto && conforto > 0) return 100;
+  if (projecao <= 0) return 0;
+  if (projecao <= sobrevivencia && sobrevivencia > 0) return (projecao / sobrevivencia) * escala[1];
+  if (projecao <= estabilidade && estabilidade > sobrevivencia) {
+    return escala[1] + ((projecao - sobrevivencia) / (estabilidade - sobrevivencia)) * (escala[2] - escala[1]);
   }
-  if (sobrevivencia > 0 && projecao >= sobrevivencia && estabilidade > sobrevivencia) {
-    return 34 + ((projecao - sobrevivencia) / (estabilidade - sobrevivencia)) * 36;
+  if (projecao <= conforto && conforto > estabilidade) {
+    return escala[2] + ((projecao - estabilidade) / (conforto - estabilidade)) * (escala[3] - escala[2]);
   }
-  if (sobrevivencia > 0) return (projecao / sobrevivencia) * 34;
-  return 0;
+  return Math.min((projecao / maiorMeta) * 100, 100);
 }
 
 function metaIcone(nome) {
@@ -715,7 +719,7 @@ function atualizarDashboard(ctx) {
     const valorDiaNecessario = diasRestantes > 0 ? Math.max((proximaMeta.valor - entradas) / diasRestantes, 0) : 0;
     metaAjustadaCard.style.display = "";
     dashProximaMetaLabel.innerText = proximaMeta.acao;
-    dashMetaAjustada.innerText = `${moeda(valorDiaNecessario)}/dia`;
+    dashMetaAjustada.innerHTML = `<span class="daily-value">${moeda(valorDiaNecessario)}</span><span class="daily-unit">/dia</span>`;
     dashMetaAjustada.parentElement.querySelector("p").innerText = `${proximaMeta.nome} · ${diasRestantes} dia(s) restantes`;
   } else {
     metaAjustadaCard.style.display = "none";
@@ -731,7 +735,7 @@ function atualizarDashboard(ctx) {
   if (document.getElementById("dashSemanaExecutadoValor")) dashSemanaExecutadoValor.innerText = moeda(ganhoSemanaAtual);
   if (document.getElementById("dashMetaSemana")) dashMetaSemana.innerText = `Meta semanal: ${moeda(metaSemanal)}`;
   dashSemanaStatus.innerText = `${Math.round(percSemana)}%`;
-  if (document.getElementById("dashSemanaLabel")) dashSemanaLabel.innerText = `${Math.round(percSemana)}% da meta semanal`;
+  if (document.getElementById("dashSemanaLabel")) dashSemanaLabel.innerText = "Progresso";
 
   if (metaSemanal > 0) {
     const faltaSemana = Math.max(metaSemanal - ganhoSemanaAtual, 0);

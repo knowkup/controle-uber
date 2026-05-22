@@ -367,9 +367,9 @@ input[type="date"] {
 
 /* Dashboard */
 .dashboard-hero {
-  background: linear-gradient(135deg, #111316 0%, #20242b 58%, #315f8f 100%);
-  color: white;
-  border: none;
+  background: linear-gradient(135deg, rgba(255,255,255,0.96), rgba(247,251,255,0.9) 56%, rgba(255,249,239,0.9));
+  color: var(--text);
+  border: 1px solid rgba(230, 226, 216, 0.92);
   overflow: hidden;
   position: relative;
 }
@@ -379,7 +379,7 @@ input[type="date"] {
   position: absolute;
   inset: auto 0 0 0;
   height: 1px;
-  background: rgba(255,255,255,0.16);
+  background: rgba(18,20,23,0.08);
 }
 
 .dashboard-label {
@@ -387,7 +387,7 @@ input[type="date"] {
   font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  opacity: 0.76;
+  color: var(--muted);
   margin-bottom: 8px;
 }
 
@@ -397,12 +397,13 @@ input[type="date"] {
   letter-spacing: 0;
   line-height: 0.98;
   margin: 0;
+  color: var(--text);
 }
 
 .dashboard-sub {
   margin-top: 10px;
   font-size: 14px;
-  opacity: 0.82;
+  color: var(--muted);
 }
 
 .dashboard-hero-kpis {
@@ -421,8 +422,9 @@ input[type="date"] {
   gap: 4px;
   padding: 10px 13px;
   border-radius: 14px;
-  background: rgba(255,255,255,0.11);
-  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.76);
+  border: 1px solid #e8e3d8;
+  box-shadow: 0 8px 18px rgba(25, 27, 31, 0.045);
 }
 
 .dashboard-atual-box span,
@@ -431,7 +433,7 @@ input[type="date"] {
   font-weight: 610;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  opacity: 0.72;
+  color: var(--muted);
 }
 
 .dashboard-atual-box strong,
@@ -439,6 +441,7 @@ input[type="date"] {
   font-size: 18px;
   letter-spacing: 0;
   font-weight: 720;
+  color: var(--text);
 }
 
 .dashboard-sobra-box {
@@ -449,21 +452,22 @@ input[type="date"] {
   display: block;
   font-size: 12px;
   line-height: 1.25;
-  opacity: 0.72;
+  color: var(--muted);
 }
 
-.dashboard-sobra-box.negativa strong { color: #fecaca; }
-.dashboard-sobra-box.positiva strong { color: #bbf7d0; }
+.dashboard-sobra-box.negativa strong { color: var(--red); }
+.dashboard-sobra-box.positiva strong { color: var(--green); }
 
 .dashboard-status {
   display: inline-flex;
   margin-top: 12px;
   padding: 8px 12px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.13);
-  border: 1px solid rgba(255,255,255,0.18);
+  background: #f4f8f5;
+  border: 1px solid #d8ebde;
   font-size: 13px;
   font-weight: 640;
+  color: var(--green);
 }
 
 .dashboard-grid-3 {
@@ -592,22 +596,22 @@ input[type="date"] {
   inset: 4px 4px auto;
   aspect-ratio: 2 / 1;
   border-radius: 999px 999px 0 0;
-  background: conic-gradient(from 270deg at 50% 100%, #ef4444 0deg, #f59e0b 54deg, #facc15 92deg, #22c55e 180deg, transparent 180deg);
-  -webkit-mask: radial-gradient(circle at 50% 100%, transparent 0 56%, #000 57% 66%, transparent 67%);
-  mask: radial-gradient(circle at 50% 100%, transparent 0 56%, #000 57% 66%, transparent 67%);
+  background: conic-gradient(from 270deg at 50% 100%, #e8eef2 0deg, #28ad5f 65deg, #f59e0b 122deg, #ef5b55 180deg, transparent 180deg);
+  -webkit-mask: radial-gradient(circle at 50% 100%, transparent 0 55%, #000 56% 67%, transparent 68%);
+  mask: radial-gradient(circle at 50% 100%, transparent 0 55%, #000 56% 67%, transparent 68%);
 }
 
 .ritmo-ponteiro {
   position: absolute;
   left: 50%;
   bottom: 0;
-  width: 2px;
-  height: 54%;
+  width: 4px;
+  height: 53%;
   border-radius: 999px;
-  background: #111827;
+  background: linear-gradient(180deg, #111827, #475569);
   transform-origin: 50% 100%;
   transform: translateX(-50%) rotate(var(--pointer-angle));
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.16);
+  box-shadow: 0 7px 16px rgba(15, 23, 42, 0.2);
   transition: transform 0.25s ease;
 }
 
@@ -616,12 +620,12 @@ input[type="date"] {
   position: absolute;
   left: 50%;
   bottom: -8px;
-  width: 17px;
-  height: 17px;
+  width: 20px;
+  height: 20px;
   border-radius: 999px;
   background: #111827;
   transform: translateX(-50%);
-  border: 4px solid #fff;
+  border: 5px solid #fff;
 }
 
 .ritmo-tick {
@@ -640,16 +644,18 @@ input[type="date"] {
 
 .ritmo-legenda {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-top: 8px;
-  font-size: 12px;
+  grid-template-columns: 0.7fr 1fr 1fr 1fr;
+  gap: 6px;
+  margin-top: 9px;
+  font-size: 11px;
   color: var(--muted);
   font-weight: 620;
 }
 
-.ritmo-legenda span:nth-child(2) { text-align: center; }
-.ritmo-legenda span:nth-child(3) { text-align: right; }
+.ritmo-legenda span:nth-child(1) { text-align: left; }
+.ritmo-legenda span:nth-child(2),
+.ritmo-legenda span:nth-child(3) { text-align: center; }
+.ritmo-legenda span:nth-child(4) { text-align: right; }
 
 .ritmo-resumo {
   margin-top: 12px;
@@ -716,6 +722,19 @@ input[type="date"] {
   letter-spacing: 0;
   font-weight: 820;
   color: var(--text);
+}
+
+.kpi-card .daily-value {
+  font: inherit;
+}
+
+.kpi-card .daily-unit {
+  margin-left: 2px;
+  color: var(--muted);
+  font-size: 17px;
+  font-weight: 620;
+  opacity: 0.62;
+  vertical-align: baseline;
 }
 
 .kpi-proxima strong,
