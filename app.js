@@ -21,7 +21,8 @@ let config = {
   metaCustosGerais: 0,
   metaParcela: 0,
   diasPlanejados: 0,
-  metaConsistente: 0
+  metaConsistente: 0,
+  metas: []
 };
 
 const STORAGE_KEY = "controleUberFelipe";
@@ -46,11 +47,15 @@ document.getElementById("btnAdicionar").addEventListener("click", adicionar);
 document.querySelectorAll('[data-action="salvar-config"]').forEach(botao => {
   botao.addEventListener("click", salvarConfiguracoes);
 });
+document.querySelectorAll('[data-action="cadastrar-meta"]').forEach(botao => {
+  botao.addEventListener("click", cadastrarMeta);
+});
 document.getElementById("btnExportar").addEventListener("click", exportarJSON);
 document.getElementById("btnImportar").addEventListener("click", () => document.getElementById("importarArquivo").click());
 document.getElementById("btnLimpar").addEventListener("click", limparDados);
-["valor", "saldoInicial", "metaConsistente", "metaGasolina", "metaSeguro", "metaCustosGerais", "metaParcela"].forEach(id => {
-  document.getElementById(id).addEventListener("blur", event => formatarCampoMoeda(event.target));
+["valor", "saldoInicial", "metaValor"].forEach(id => {
+  const campo = document.getElementById(id);
+  if (campo) campo.addEventListener("blur", event => formatarCampoMoeda(event.target));
 });
 
 function trocarAba(aba) {
@@ -187,12 +192,33 @@ async function adicionar() {
 
 async function salvarConfiguracoes() {
   config.saldoInicial = parseMoeda(saldoInicial.value);
-  config.metaGasolina = parseMoeda(metaGasolina.value);
-  config.metaSeguro = parseMoeda(metaSeguro.value);
-  config.metaCustosGerais = parseMoeda(metaCustosGerais.value);
-  config.metaParcela = parseMoeda(metaParcela.value);
   config.diasPlanejados = parseInt(diasPlanejados.value) || 0;
-  config.metaConsistente = parseMoeda(metaConsistente.value);
+  migrarMetasConfiguradas();
+
+  preencherCamposConfig();
+  render();
+  await salvarEstado();
+}
+
+async function cadastrarMeta() {
+  const nome = limitarTexto(document.getElementById("metaNome").value, 60);
+  const valor = parseMoeda(document.getElementById("metaValor").value);
+  const objetivo = objetivoMetaSeguro(document.getElementById("metaObjetivo").value);
+
+  if (!nome) return alert("Informe o nome da meta.");
+  if (!valor) return alert("Informe o valor da meta.");
+
+  migrarMetasConfiguradas();
+  config.metas.push({
+    id: gerarId(),
+    nome,
+    valor,
+    objetivo
+  });
+
+  document.getElementById("metaNome").value = "";
+  document.getElementById("metaValor").value = "";
+  document.getElementById("metaObjetivo").value = "sobrevivencia";
 
   preencherCamposConfig();
   render();
@@ -220,7 +246,91 @@ function numeroPercentualSeguro(valor) {
   return Math.min(Math.max(numero, 0), 100);
 }
 
+function objetivoMetaSeguro(valor) {
+  return ["sobrevivencia", "estabilidade", "conforto"].includes(valor) ? valor : "sobrevivencia";
+}
+
+function rotuloObjetivoMeta(valor) {
+  const objetivo = objetivoMetaSeguro(valor);
+  if (objetivo === "estabilidade") return "Estabilidade";
+  if (objetivo === "conforto") return "Conforto";
+  return "Sobrevivência";
+}
+
+function normalizarMetasConfig() {
+  config.metas = (Array.isArray(config.metas) ? config.metas : [])
+    .map(meta => ({
+      id: meta.id ? String(meta.id) : gerarId(),
+      nome: limitarTexto(meta.nome || meta.name, 60),
+      valor: Number(meta.valor ?? meta.value) || 0,
+      objetivo: objetivoMetaSeguro(meta.objetivo || meta.categoria || meta.tipo)
+    }))
+    .filter(meta => meta.nome && meta.valor > 0);
+}
+
+function migrarMetasConfiguradas() {
+  normalizarMetasConfig();
+  if (config.metas.length) {
+    limparMetasLegadas();
+    return;
+  }
+
+  const antigas = [
+    { nome: "Gasolina", valor: Number(config.metaGasolina) || 0, objetivo: "sobrevivencia" },
+    { nome: "Seguro", valor: Number(config.metaSeguro) || 0, objetivo: "sobrevivencia" },
+    { nome: "Custos gerais", valor: Number(config.metaCustosGerais) || 0, objetivo: "sobrevivencia" },
+    { nome: "Sobra desejada", valor: Number(config.metaConsistente) || 0, objetivo: "estabilidade" },
+    { nome: "Parcela", valor: Number(config.metaParcela) || 0, objetivo: "conforto" }
+  ].filter(meta => meta.valor > 0);
+
+  config.metas = antigas.map(meta => ({ id: gerarId(), ...meta }));
+  limparMetasLegadas();
+}
+
+function limparMetasLegadas() {
+  config.metaGasolina = 0;
+  config.metaSeguro = 0;
+  config.metaCustosGerais = 0;
+  config.metaParcela = 0;
+  config.metaConsistente = 0;
+}
+
+function totaisMetasConfig(configBase = config) {
+  const metas = Array.isArray(configBase.metas) ? configBase.metas : [];
+  if (!metas.length) {
+    const sobrevivenciaLegada = (Number(configBase.metaGasolina) || 0) + (Number(configBase.metaSeguro) || 0) + (Number(configBase.metaCustosGerais) || 0);
+    const estabilidadeLegada = sobrevivenciaLegada + (Number(configBase.metaConsistente) || 0);
+    const confortoLegado = estabilidadeLegada + (Number(configBase.metaParcela) || 0);
+    return { sobrevivencia: sobrevivenciaLegada, estabilidade: estabilidadeLegada, conforto: confortoLegado };
+  }
+
+  const totalSobrevivencia = metas
+    .filter(meta => objetivoMetaSeguro(meta.objetivo) === "sobrevivencia")
+    .reduce((soma, meta) => soma + (Number(meta.valor) || 0), 0);
+  const totalEstabilidadeDireta = metas
+    .filter(meta => objetivoMetaSeguro(meta.objetivo) === "estabilidade")
+    .reduce((soma, meta) => soma + (Number(meta.valor) || 0), 0);
+  const totalConfortoDireto = metas
+    .filter(meta => objetivoMetaSeguro(meta.objetivo) === "conforto")
+    .reduce((soma, meta) => soma + (Number(meta.valor) || 0), 0);
+
+  const sobrevivencia = totalSobrevivencia;
+  const estabilidade = sobrevivencia + totalEstabilidadeDireta;
+  const conforto = estabilidade + totalConfortoDireto;
+  return { sobrevivencia, estabilidade, conforto };
+}
+
+function valorRealizadoMeta(meta, ctx) {
+  const nome = String(meta.nome || "").toLowerCase();
+  if (nome.includes("gasolina")) return ctx.gastoGasolina || 0;
+  if (nome.includes("seguro")) return ctx.gastoSeguro || 0;
+  if (nome.includes("parcela")) return ctx.gastoParcela || 0;
+  if (nome.includes("custo")) return ctx.gastoCustosGerais || 0;
+  return 0;
+}
+
 function render() {
+  migrarMetasConfiguradas();
   tabela.innerHTML = "";
 
   let entradas = 0;
@@ -301,8 +411,10 @@ function render() {
   const custoPorKm = kmRodado > 0 ? gastoGasolina / kmRodado : 0;
   const lucroPorKm = kmRodado > 0 ? lucroOperacional / kmRodado : 0;
 
-  const custosSemParcela = config.metaGasolina + config.metaSeguro + config.metaCustosGerais;
-  const custosTotais = custosSemParcela + config.metaParcela;
+  const totaisMetas = totaisMetasConfig();
+  const custosSemParcela = totaisMetas.sobrevivencia;
+  const metaConsistenteValor = totaisMetas.estabilidade;
+  const custosTotais = totaisMetas.conforto;
 
   const diasTrabalhadosValor = diasComGanhos.size;
   const diasRestantes = Math.max(config.diasPlanejados - diasTrabalhadosValor, 0);
@@ -325,15 +437,7 @@ function render() {
   custoPorKmEl().innerText = moeda(custoPorKm);
   lucroPorKmEl().innerText = moeda(lucroPorKm);
 
-  metaGasolinaDefinida.innerText = moeda(config.metaGasolina);
-  metaSeguroDefinida.innerText = moeda(config.metaSeguro);
-  metaCustosGeraisDefinida.innerText = moeda(config.metaCustosGerais);
-  metaParcelaDefinida.innerText = moeda(config.metaParcela);
-
-  saldoMetaGasolina.innerText = moeda(config.metaGasolina - gastoGasolina);
-  saldoMetaSeguro.innerText = moeda(config.metaSeguro - gastoSeguro);
-  saldoMetaCustosGerais.innerText = moeda(config.metaCustosGerais - gastoCustosGerais);
-  saldoMetaParcela.innerText = moeda(config.metaParcela - gastoParcela);
+  renderizarResumoMetas({ gastoGasolina, gastoSeguro, gastoCustosGerais, gastoParcela });
 
   if (document.getElementById("diasTrabalhados")) diasTrabalhados.innerText = diasTrabalhadosValor;
   if (document.getElementById("mediaDia")) mediaDia.innerText = moeda(mediaDiaValor);
@@ -352,7 +456,8 @@ function render() {
     metaAjustadaValor
   });
 
-  renderizarHistoricoMensal({ entradas, saidas, kmRodado, litrosTotal, gastoGasolina, lucroOperacional, custosSemParcela, custosTotais });
+  renderizarMetasConfig();
+  renderizarHistoricoMensal({ entradas, saidas, kmRodado, litrosTotal, gastoGasolina, lucroOperacional, custosSemParcela, metaConsistenteValor, custosTotais });
 }
 
 function entradasEl() { return document.getElementById("entradas"); }
@@ -363,6 +468,62 @@ function gastoGasolinaEl() { return document.getElementById("gastoGasolina"); }
 function receitaPorKmEl() { return document.getElementById("receitaPorKm"); }
 function custoPorKmEl() { return document.getElementById("custoPorKm"); }
 function lucroPorKmEl() { return document.getElementById("lucroPorKm"); }
+
+function renderizarResumoMetas(ctx) {
+  const container = document.getElementById("metasCustoResumo");
+  if (!container) return;
+  migrarMetasConfiguradas();
+
+  if (!config.metas.length) {
+    container.innerHTML = '<tr><td colspan="3">Nenhuma meta cadastrada</td></tr>';
+    return;
+  }
+
+  container.innerHTML = config.metas.map(meta => {
+    const realizado = valorRealizadoMeta(meta, ctx);
+    const saldo = (Number(meta.valor) || 0) - realizado;
+    return `
+      <tr>
+        <td>${textoSeguro(meta.nome)}<small class="meta-table-tag">${rotuloObjetivoMeta(meta.objetivo)}</small></td>
+        <td class="valor-metrica">${moeda(meta.valor)}</td>
+        <td class="valor-metrica">${moeda(saldo)}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function renderizarMetasConfig() {
+  const container = document.getElementById("metasLista");
+  if (!container) return;
+  migrarMetasConfiguradas();
+
+  if (!config.metas.length) {
+    container.innerHTML = '<div class="meta-empty">Nenhuma meta cadastrada ainda.</div>';
+    return;
+  }
+
+  container.innerHTML = config.metas.map(meta => `
+    <div class="meta-config-row">
+      <div>
+        <strong>${textoSeguro(meta.nome)}</strong>
+        <small>${rotuloObjetivoMeta(meta.objetivo)}</small>
+      </div>
+      <span>${moeda(meta.valor)}</span>
+      <button type="button" class="btn-excluir" data-meta-id="${textoSeguro(meta.id)}">Excluir</button>
+    </div>
+  `).join("");
+
+  container.querySelectorAll("[data-meta-id]").forEach(botao => {
+    botao.addEventListener("click", () => excluirMeta(botao.getAttribute("data-meta-id")));
+  });
+}
+
+async function excluirMeta(id) {
+  config.metas = (Array.isArray(config.metas) ? config.metas : []).filter(meta => String(meta.id) !== String(id));
+  preencherCamposConfig();
+  render();
+  await salvarEstado();
+}
 
 
 
@@ -430,9 +591,10 @@ function calcularResumoDoMes(mesKey, listaDados, configBase = config, status = "
   const resultado = (Number(configBase.saldoInicial) || 0) + lucroOperacional;
   const lucroPorKm = kmRodado > 0 ? lucroOperacional / kmRodado : 0;
 
-  const metaMinima = (Number(configBase.metaGasolina) || 0) + (Number(configBase.metaSeguro) || 0) + (Number(configBase.metaCustosGerais) || 0);
-  const metaConsistenteValor = metaMinima + (Number(configBase.metaConsistente) || 0);
-  const metaIdeal = metaMinima + (Number(configBase.metaParcela) || 0);
+  const totaisMetas = totaisMetasConfig(configBase);
+  const metaMinima = totaisMetas.sobrevivencia;
+  const metaConsistenteValor = totaisMetas.estabilidade;
+  const metaIdeal = totaisMetas.conforto;
 
   let faixaMeta = "Abaixo da mínima";
   if (metaIdeal > 0 && entradas >= metaIdeal) faixaMeta = "Ideal";
@@ -528,9 +690,10 @@ function renderizarHistoricoMensal(ctx = {}) {
   resumos.forEach(({ mesKey, status, resumo }) => {
     const statusClasse = status === "Em andamento" ? "andamento" : "fechado";
     const metaClasse = classeMetaHistorico(resumo.metaAtingida);
-    const metaMinima = (Number(resumo.config?.metaGasolina) || 0) + (Number(resumo.config?.metaSeguro) || 0) + (Number(resumo.config?.metaCustosGerais) || 0);
-    const metaConsistente = metaMinima + (Number(resumo.config?.metaConsistente) || 0);
-    const metaIdeal = metaMinima + (Number(resumo.config?.metaParcela) || 0);
+    const totaisMetas = totaisMetasConfig(resumo.config || {});
+    const metaMinima = totaisMetas.sobrevivencia;
+    const metaConsistente = totaisMetas.estabilidade;
+    const metaIdeal = totaisMetas.conforto;
     const metaReferencia = Math.max(metaIdeal, metaConsistente, metaMinima, resumo.entradas || 0, 1);
     const progresso = numeroPercentualSeguro(((resumo.entradas || 0) / metaReferencia) * 100);
     const diasTexto = (resumo.diasTrabalhados || 0) === 1 ? "1 dia trabalhado" : `${resumo.diasTrabalhados || 0} dias trabalhados`;
@@ -667,9 +830,7 @@ function atualizarDashboard(ctx) {
   const diasRestantes = ctx.diasRestantes || 0;
   const mediaDiaValor = ctx.mediaDiaValor || 0;
 
-  // config.metaConsistente agora representa a sobra desejada acima da meta mínima.
-  const sobraDesejadaConsistente = Number(config.metaConsistente) || 0;
-  const metaConsistenteValor = custosSemParcela + sobraDesejadaConsistente;
+  const metaConsistenteValor = totaisMetasConfig().estabilidade;
 
   const projecaoMes = mediaDiaValor * (Number(config.diasPlanejados) || 0);
   const custosAtuais = Math.abs(saidas);
@@ -936,6 +1097,17 @@ function normalizarDados() {
   }));
 }
 
+function normalizarConfigAtual() {
+  config.saldoInicial = Number(config.saldoInicial) || 0;
+  config.metaGasolina = Number(config.metaGasolina) || 0;
+  config.metaSeguro = Number(config.metaSeguro) || 0;
+  config.metaCustosGerais = Number(config.metaCustosGerais) || 0;
+  config.metaParcela = Number(config.metaParcela) || 0;
+  config.diasPlanejados = Number(config.diasPlanejados) || 0;
+  config.metaConsistente = Number(config.metaConsistente) || 0;
+  migrarMetasConfiguradas();
+}
+
 async function excluirPorId(id) {
   if (!confirm("Excluir este lançamento?")) return;
 
@@ -1028,12 +1200,8 @@ function definirDataHoje() {
 
 function preencherCamposConfig() {
   saldoInicial.value = config.saldoInicial ? moeda(config.saldoInicial) : "";
-  metaGasolina.value = config.metaGasolina ? moeda(config.metaGasolina) : "";
-  metaSeguro.value = config.metaSeguro ? moeda(config.metaSeguro) : "";
-  metaCustosGerais.value = config.metaCustosGerais ? moeda(config.metaCustosGerais) : "";
-  metaParcela.value = config.metaParcela ? moeda(config.metaParcela) : "";
   diasPlanejados.value = config.diasPlanejados || "";
-  metaConsistente.value = config.metaConsistente ? moeda(config.metaConsistente) : "";
+  renderizarMetasConfig();
 }
 
 function salvarBackupLocal() {
@@ -1102,6 +1270,7 @@ function iniciarSincronizacaoFirebase() {
       dados = dadosLocais;
       normalizarDados();
       config = { ...config, ...configLocal };
+      normalizarConfigAtual();
       fechamentos = { ...fechamentos, ...fechamentosLocais };
       executarManutencaoMensal(false);
       preencherCamposConfig();
@@ -1125,6 +1294,7 @@ function iniciarSincronizacaoFirebase() {
       dados = dadosLocais;
       normalizarDados();
       config = { ...config, ...configLocal };
+      normalizarConfigAtual();
       fechamentos = { ...fechamentos, ...fechamentosLocais };
       executarManutencaoMensal(false);
       preencherCamposConfig();
@@ -1136,6 +1306,7 @@ function iniciarSincronizacaoFirebase() {
     dados = dadosFirebase;
     normalizarDados();
     config = { ...config, ...configFirebase };
+    normalizarConfigAtual();
     fechamentos = { ...fechamentos, ...fechamentosFirebase };
 
     const houveManutencao = executarManutencaoMensal(false);
@@ -1153,6 +1324,7 @@ function iniciarSincronizacaoFirebase() {
     dados = backup.dadosLocais;
     normalizarDados();
     config = { ...config, ...backup.configLocal };
+    normalizarConfigAtual();
     fechamentos = { ...fechamentos, ...backup.fechamentosLocais };
     preencherCamposConfig();
     render();
@@ -1199,6 +1371,7 @@ function importarJSON(event) {
         if (importado.config) config = { ...config, ...importado.config };
         if (importado.fechamentos) fechamentos = { ...fechamentos, ...importado.fechamentos };
         if (importado.saldoInicial !== undefined) config.saldoInicial = parseFloat(importado.saldoInicial) || 0;
+        normalizarConfigAtual();
       } else {
         return alert("Arquivo inválido");
       }
@@ -1231,7 +1404,8 @@ async function limparDados() {
     metaCustosGerais: 0,
     metaParcela: 0,
     diasPlanejados: 0,
-    metaConsistente: 0
+    metaConsistente: 0,
+    metas: []
   };
   fechamentos = {};
 

@@ -76,6 +76,8 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
 
 ## Mudancas recentes
 
+- Em 2026-05-22, a configuracao de metas deixou de usar campos fixos e passou a aceitar metas cadastraveis ilimitadas com objetivo Sobrevivencia, Estabilidade ou Conforto; a dashboard passou a calcular totais acumulados por objetivo e migrar automaticamente metas antigas.
+- Backup criado antes da mudanca para metas cadastraveis: `20260522-121312`.
 - Em 2026-05-22, corrigida a cor do valor no card de proxima meta para manter `R$ ...` e `/dia` em laranja, sem herdar o cinza global dos spans.
 - Backup criado antes da correcao da cor do valor/dia: `20260522-120618`.
 - Em 2026-05-22, corrigido apenas o `/dia` do card de proxima meta: mantido na mesma linha do valor, em minusculo, com fonte menor e sem herdar caixa alta.

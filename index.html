@@ -144,28 +144,7 @@
         <th>Saldo</th>
       </tr>
     </thead>
-    <tbody>
-      <tr>
-        <td>Gasolina</td>
-        <td class="valor-metrica" id="metaGasolinaDefinida">R$ 0,00</td>
-        <td class="valor-metrica" id="saldoMetaGasolina">R$ 0,00</td>
-      </tr>
-      <tr>
-        <td>Seguro</td>
-        <td class="valor-metrica" id="metaSeguroDefinida">R$ 0,00</td>
-        <td class="valor-metrica" id="saldoMetaSeguro">R$ 0,00</td>
-      </tr>
-      <tr>
-        <td>Custos gerais</td>
-        <td class="valor-metrica" id="metaCustosGeraisDefinida">R$ 0,00</td>
-        <td class="valor-metrica" id="saldoMetaCustosGerais">R$ 0,00</td>
-      </tr>
-      <tr>
-        <td>Parcela</td>
-        <td class="valor-metrica" id="metaParcelaDefinida">R$ 0,00</td>
-        <td class="valor-metrica" id="saldoMetaParcela">R$ 0,00</td>
-      </tr>
-    </tbody>
+    <tbody id="metasCustoResumo"></tbody>
   </table>
 </div>
 
@@ -350,38 +329,38 @@
   <label>Dias planejados</label>
   <input type="text" id="diasPlanejados" inputmode="numeric" placeholder="Ex: 21">
 
-  <label>Sobra desejada do mês</label>
-  <input type="text" id="metaConsistente" inputmode="decimal" placeholder="R$ 0,00">
-
   <button data-action="salvar-config">Salvar configurações</button>
 </div>
 
 <div class="card">
-  <h3 class="heading-with-icon"><span class="heading-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"/></svg></span>Configurar Metas</h3>
+  <h3 class="heading-with-icon"><span class="heading-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"/></svg></span>Cadastrar Metas</h3>
 
   <div class="grid-metas-config">
     <div>
-      <label>Gasolina</label>
-      <input type="text" id="metaGasolina" inputmode="decimal" placeholder="R$ 0,00">
+      <label>Nome da meta</label>
+      <input type="text" id="metaNome" placeholder="Ex: Gasolina">
     </div>
 
     <div>
-      <label>Seguro</label>
-      <input type="text" id="metaSeguro" inputmode="decimal" placeholder="R$ 0,00">
+      <label>Valor</label>
+      <input type="text" id="metaValor" inputmode="decimal" placeholder="R$ 0,00">
     </div>
 
     <div>
-      <label>Custos gerais</label>
-      <input type="text" id="metaCustosGerais" inputmode="decimal" placeholder="R$ 0,00">
+      <label>Objetivo</label>
+      <select id="metaObjetivo">
+        <option value="sobrevivencia">Sobrevivência</option>
+        <option value="estabilidade">Estabilidade</option>
+        <option value="conforto">Conforto</option>
+      </select>
     </div>
 
-    <div>
-      <label>Parcela</label>
-      <input type="text" id="metaParcela" inputmode="decimal" placeholder="R$ 0,00">
+    <div class="meta-form-action">
+      <button type="button" data-action="cadastrar-meta">Cadastrar meta</button>
     </div>
   </div>
 
-  <button data-action="salvar-config">Salvar metas</button>
+  <div class="metas-lista" id="metasLista"></div>
 </div>
 
 <div class="card">
