@@ -8,24 +8,40 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
 - Se este arquivo nao existir em uma nova copia do projeto, recriar esta estrutura.
 - Ao finalizar qualquer tarefa, atualizar este arquivo com decisoes, mudancas, pendencias, comandos relevantes e proximos passos.
 - Manter os registros breves, objetivos e uteis para continuidade.
+- Repositorio oficial local: `C:\Users\felipe.k\OneDrive\Documentos\14. Sistemas Kupka\App Uber`.
+- Qualquer copia fora do OneDrive e apenas area temporaria.
+- Antes de mexer em regra de negocio, fluxo, dados ou integracao, revisar as premissas deste arquivo.
+- Se algum dia forem criados `REGRAS_NEGOCIO.md`, `DESIGN_SYSTEM.md` ou `ROADMAP.md`, consultar esses arquivos conforme o tipo de mudanca.
+- Se a mudanca for visual, UX, layout, mobile, tema, cards ou botoes, revisar tambem a secao de UX/design deste arquivo.
+- Se tocar pendencias conhecidas, consultar a secao de pendencias e perguntar se pendencias relacionadas devem entrar junto ou se o foco e apenas o pedido atual.
+- Trabalhar de forma incremental, sem recriar estrutura nem trocar stack sem pedido explicito.
+- Nao reverter alteracoes nao feitas por mim sem autorizacao clara.
+- Criar backup no OneDrive antes de mudancas relevantes.
+- Validar o que for possivel antes de finalizar, especialmente sintaxe JavaScript quando mexer em `app.js`.
+- Revisar diff antes de finalizar.
+- Atualizar documentacao quando a mudanca registrar regra, fluxo, decisao tecnica ou historico relevante.
+- Fazer commit ao final de alteracao solicitada quando houver mudanca em arquivo.
+- Fazer push quando for entrega/publicacao no remoto ou quando o usuario pedir.
 
 ## Projeto
 
 - Nome: Controle Uber.
 - Repositorio GitHub: `https://github.com/kupka1988/controle-uber.git`.
 - Branch principal: `main`.
-- Pasta local do Codex nesta sessao: `C:\Users\felipe.k\Documents\New project`.
-- Pasta do OneDrive usada pelo usuario: `C:\Users\felipe.k\OneDrive\Documentos\14. Sistemas Kupka\App Uber`.
+- Pasta oficial local: `C:\Users\felipe.k\OneDrive\Documentos\14. Sistemas Kupka\App Uber`.
+- Pasta temporaria inicial da sessao Codex: `C:\Users\felipe.k\Documents\New project`.
 
 ## Fluxo combinado
 
-- Antes de alterar arquivos do OneDrive, criar backup em `C:\Users\felip\OneDrive\Documentos\14. Sistemas Kupka\App Uber\backups`.
-- Manter o mesmo tratamento usado no projeto Rota Financeira: backup, alteracao cuidadosa, validacao, commit, push e email de confirmacao quando solicitado.
+- Antes de alterar arquivos do OneDrive, criar backup em `C:\Users\felipe.k\OneDrive\Documentos\14. Sistemas Kupka\App Uber\backups`.
+- Aproveitar do Rota Financeira apenas as premissas de trabalho transferiveis: backup, alteracao cuidadosa, validacao, revisao de diff, documentacao, commit e push quando fizer sentido.
+- Nao misturar conceitos de produto do Rota Financeira neste app.
 - Para email de confirmacao, usar o mesmo modelo do Rota Financeira, trocando o assunto para iniciar com `Controle Uber`.
 
 ## Arquitetura atual
 
 - App estatico em HTML, CSS e JavaScript puro.
+- Nao migrar para React, Angular, Flutter ou outra stack sem pedido explicito.
 - Arquivos principais:
   - `index.html`: estrutura da pagina e imports.
   - `styles.css`: estilos e responsividade mobile.
@@ -35,11 +51,34 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
   - `firebase.json`: referencia local para regras do Firestore.
   - `firestore.rules`: regras seguras preparadas para Firestore.
 - Foco principal de UX: mobile.
+- Produto pessoal para controle operacional e financeiro de corridas/uso Uber conforme a logica ja existente no app.
+- Nao importar conceitos de dividas, parcelas, rota de quitacao ou prioridades financeiras do Rota Financeira.
 - Integracao atual: Firebase Firestore via scripts compat `firebase-app-compat.js` e `firebase-firestore-compat.js`.
 - Documento usado no Firestore: `controleUber/estadoPrincipal`.
 
+## Premissas de UX/design
+
+- Manter layout compacto, escaneavel e operacional.
+- Tema claro e o padrao.
+- Mobile, especialmente iPhone, deve ser cuidado continuamente.
+- Nao criar botao sem implementacao.
+- Nao usar `alert()` ou `confirm()`; preferir modal/toast proprios quando necessario.
+- Nao criar cards novos sem necessidade.
+- Evitar excesso de texto explicativo dentro da interface.
+- Preservar contexto do usuario em edicoes, importacoes, exclusoes e sincronizacoes.
+
+## Premissas de dados e seguranca
+
+- Nao limpar, sobrescrever ou recriar dados do Firebase.
+- Nao alterar Firebase alem do necessario para o pedido.
+- Alteracoes em dados devem ser conservadoras e rastreaveis.
+- Antes de excluir algo, garantir consistencia dos dados vinculados.
+
 ## Mudancas recentes
 
+- Em 2026-05-22, incorporadas ao contexto do Controle Uber as premissas de trabalho reaproveitaveis do Rota Financeira, separando regras transferiveis de conceitos especificos daquele produto.
+- Corrigida a pasta oficial local para o OneDrive e corrigido o caminho de backups.
+- Backup criado antes da alteracao documental: `20260522-084404`.
 - Commit `cdf6c3a`: `Separa arquivos e reforca seguranca`.
 - O antigo `index.html` monolitico foi separado em `index.html`, `styles.css` e `app.js`.
 - Eventos inline foram removidos do HTML e registrados em `app.js`.
