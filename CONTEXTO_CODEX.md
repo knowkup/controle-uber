@@ -76,6 +76,8 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
 
 ## Mudancas recentes
 
+- Em 2026-05-22, ajustado o visual acordado da Dashboard: topo claro premium com fundo aurora, card de valor/dia retomado em laranja com `/dia` menor ao lado do valor e velocimetro substituido por regua horizontal proporcional com marcador de projecao.
+- Backup criado antes da troca do velocimetro por regua: `20260522-115342`.
 - Em 2026-05-22, aplicadas correcoes finais da Dashboard: topo migrado para visual claro premium, texto voltou para `Sobra Projetada`, velocimetro recebeu escala explicita `0 / Sobrevivencia / Estabilidade / Conforto`, ponteiro recalibrado por escala real de metas e ajustes finos em `/dia` e textos da Semana Atual.
 - Backup criado antes das correcoes finais da Dashboard: `20260522-114017`.
 - Em 2026-05-22, refinada a Dashboard sem reconstruir estrutura: ponteiro do ritmo mais fino/longo e calibrado visualmente, cards das metas com cores suaves por objetivo, blocos inferiores com icones outline, bloco Ritmo com melhor hierarquia e Semana Atual com executado semanal como foco principal.

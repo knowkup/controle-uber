@@ -628,20 +628,23 @@ function proximaMetaAtiva(valor, sobrevivencia, estabilidade, conforto) {
   return null;
 }
 
-function posicaoRitmo(projecao, sobrevivencia, estabilidade, conforto) {
-  const pontos = [0, sobrevivencia, estabilidade, conforto].map(valor => Number(valor) || 0);
-  const maiorMeta = Math.max(...pontos, 1);
-  const escala = pontos.map(valor => Math.max(0, Math.min((valor / maiorMeta) * 100, 100)));
-  if (projecao >= conforto && conforto > 0) return 100;
-  if (projecao <= 0) return 0;
-  if (projecao <= sobrevivencia && sobrevivencia > 0) return (projecao / sobrevivencia) * escala[1];
-  if (projecao <= estabilidade && estabilidade > sobrevivencia) {
-    return escala[1] + ((projecao - sobrevivencia) / (estabilidade - sobrevivencia)) * (escala[2] - escala[1]);
-  }
-  if (projecao <= conforto && conforto > estabilidade) {
-    return escala[2] + ((projecao - estabilidade) / (conforto - estabilidade)) * (escala[3] - escala[2]);
-  }
-  return Math.min((projecao / maiorMeta) * 100, 100);
+function atualizarReguaRitmo(projecao, sobrevivencia, estabilidade, conforto) {
+  const maiorMeta = Math.max(sobrevivencia || 0, estabilidade || 0, conforto || 0, 1);
+  const pos = valor => Math.max(0, Math.min(((Number(valor) || 0) / maiorMeta) * 100, 100));
+  const setLeft = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.style.left = `${pos(value)}%`;
+  };
+  setLeft("marcaZero", 0);
+  setLeft("marcaSobrevivencia", sobrevivencia);
+  setLeft("marcaEstabilidade", estabilidade);
+  setLeft("marcaConforto", conforto);
+  setLeft("faixaZero", 0);
+  setLeft("faixaMinima", sobrevivencia);
+  setLeft("faixaConsistente", estabilidade);
+  setLeft("faixaIdeal", conforto);
+  const marcador = document.getElementById("ritmoProjecaoMarcador");
+  if (marcador) marcador.style.left = `${pos(projecao)}%`;
 }
 
 function metaIcone(nome) {
@@ -694,11 +697,7 @@ function atualizarDashboard(ctx) {
     : "Aguardando lançamentos";
   dashboardStatus.innerText = statusTexto;
 
-  const posicao = Math.max(0, Math.min(posicaoRitmo(projecaoMes, custosSemParcela, metaConsistenteValor, custosTotais), 100));
-  if (document.getElementById("ritmoPonteiro")) {
-    const angulo = -90 + (posicao * 1.8);
-    ritmoPonteiro.style.setProperty("--pointer-angle", `${angulo}deg`);
-  }
+  atualizarReguaRitmo(projecaoMes, custosSemParcela, metaConsistenteValor, custosTotais);
   faixaTexto.innerText = diasTrabalhadosValor > 0
     ? `Projeção: ${moeda(projecaoMes)}. ${statusTexto}`
     : "Registre ganhos para calcular o ritmo do mês.";
