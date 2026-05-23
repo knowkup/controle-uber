@@ -76,6 +76,8 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
 
 ## Mudancas recentes
 
+- Em 2026-05-23, `Sobra desejada` saiu do cadastro de metas e virou `Retirada desejada do mes` dentro de Configuracoes do Mes, com seletor `Conta para` padrao Estabilidade; o cadastro visual passou a ser `Custos do mes` e a Dashboard passou a mostrar `Retirada prevista`.
+- Backup criado antes de mover retirada para Configuracoes do Mes: `20260523-181951`.
 - Em 2026-05-23, a descricao de `Registrar despesa` passou a ser gerada pelas metas de custo cadastradas, com categorias padrao Seguro, Manutencao, Lavagem, Parcela e Outros; metas padrao de custo com valor zero sao criadas para novos usos sem alterar os totais ate receberem valor.
 - Backup criado antes de vincular despesas as metas: `20260523-124840`.
 - Em 2026-05-23, separada a natureza das metas entre `Custo mensal` e `Sobra desejada`: a sobra pode compor Sobrevivencia/Estabilidade/Conforto sem ser tratada como custo, aparece na composicao como `Desejado/A formar`, e a Sobra Projetada passa a usar apenas custos base.

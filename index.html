@@ -163,7 +163,7 @@
       <strong id="dashboardAtualMes">R$ 0,00</strong>
     </div>
     <div class="dashboard-sobra-box">
-      <span>Sobra Projetada</span>
+      <span>Retirada prevista</span>
       <strong id="dashboardSobraProjetada">R$ 0,00</strong>
       <small id="dashboardSobraBase">Depois dos custos do mês</small>
     </div>
@@ -336,15 +336,30 @@
     <option value="eletrico">El&eacute;trico</option>
   </select>
 
+  <div class="grid-config-retirada">
+    <div>
+      <label>Retirada desejada do m&ecirc;s</label>
+      <input type="text" id="retiradaDesejada" inputmode="decimal" placeholder="R$ 0,00">
+    </div>
+    <div>
+      <label>Conta para</label>
+      <select id="retiradaObjetivo">
+        <option value="sobrevivencia">Sobreviv&ecirc;ncia</option>
+        <option value="estabilidade" selected>Estabilidade</option>
+        <option value="conforto">Conforto</option>
+      </select>
+    </div>
+  </div>
+
   <button data-action="salvar-config">Salvar configurações</button>
 </div>
 
 <div class="card">
-  <h3 class="heading-with-icon"><span class="heading-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"/></svg></span>Cadastrar Metas</h3>
+  <h3 class="heading-with-icon"><span class="heading-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"/></svg></span>Custos do mês</h3>
 
   <div class="grid-metas-config">
     <div>
-      <label>Nome da meta</label>
+      <label>Nome do custo</label>
       <input type="text" id="metaNome" placeholder="Ex: Gasolina">
     </div>
 
@@ -354,7 +369,7 @@
     </div>
 
     <div>
-      <label>Objetivo</label>
+      <label>Faixa</label>
       <select id="metaObjetivo">
         <option value="sobrevivencia">Sobrevivência</option>
         <option value="estabilidade">Estabilidade</option>
@@ -362,16 +377,8 @@
       </select>
     </div>
 
-    <div>
-      <label>Tipo de meta</label>
-      <select id="metaTipo">
-        <option value="custo">Custo mensal</option>
-        <option value="sobra">Sobra desejada</option>
-      </select>
-    </div>
-
     <div class="meta-form-action">
-      <button type="button" id="btnSalvarMeta" data-action="cadastrar-meta">Cadastrar meta</button>
+      <button type="button" id="btnSalvarMeta" data-action="cadastrar-meta">Cadastrar custo</button>
       <button type="button" class="secundario hidden" id="btnCancelarMeta">Cancelar</button>
     </div>
   </div>

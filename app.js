@@ -23,6 +23,8 @@ let config = {
   diasPlanejados: 0,
   metaConsistente: 0,
   tipoVeiculo: "combustao",
+  retiradaDesejada: 0,
+  retiradaObjetivo: "estabilidade",
   metas: []
 };
 
@@ -66,7 +68,7 @@ if (document.getElementById("tipoVeiculo")) {
 document.getElementById("btnExportar").addEventListener("click", exportarJSON);
 document.getElementById("btnImportar").addEventListener("click", () => document.getElementById("importarArquivo").click());
 document.getElementById("btnLimpar").addEventListener("click", limparDados);
-["valor", "saldoInicial", "metaValor"].forEach(id => {
+["valor", "saldoInicial", "metaValor", "retiradaDesejada"].forEach(id => {
   const campo = document.getElementById(id);
   if (campo) campo.addEventListener("blur", event => formatarCampoMoeda(event.target));
 });
@@ -210,6 +212,8 @@ async function salvarConfiguracoes() {
   config.saldoInicial = parseMoeda(saldoInicial.value);
   config.diasPlanejados = parseInt(diasPlanejados.value) || 0;
   config.tipoVeiculo = tipoVeiculoSeguro(document.getElementById("tipoVeiculo")?.value);
+  config.retiradaDesejada = parseMoeda(document.getElementById("retiradaDesejada")?.value);
+  config.retiradaObjetivo = objetivoMetaSeguro(document.getElementById("retiradaObjetivo")?.value || "estabilidade");
   migrarMetasConfiguradas();
 
   preencherCamposConfig();
@@ -221,10 +225,10 @@ async function cadastrarMeta() {
   const nome = limitarTexto(document.getElementById("metaNome").value, 60);
   const valor = parseMoeda(document.getElementById("metaValor").value);
   const objetivo = objetivoMetaSeguro(document.getElementById("metaObjetivo").value);
-  const tipoMeta = tipoMetaSeguro(document.getElementById("metaTipo")?.value);
+  const tipoMeta = "custo";
 
-  if (!nome) return alert("Informe o nome da meta.");
-  if (!valor) return alert("Informe o valor da meta.");
+  if (!nome) return alert("Informe o nome do custo.");
+  if (!valor) return alert("Informe o valor do custo.");
 
   migrarMetasConfiguradas();
   if (metaEmEdicaoId) {
@@ -254,8 +258,7 @@ function resetarFormularioMeta() {
   document.getElementById("metaNome").value = "";
   document.getElementById("metaValor").value = "";
   document.getElementById("metaObjetivo").value = "sobrevivencia";
-  if (document.getElementById("metaTipo")) metaTipo.value = "custo";
-  if (document.getElementById("btnSalvarMeta")) btnSalvarMeta.innerText = "Cadastrar meta";
+  if (document.getElementById("btnSalvarMeta")) btnSalvarMeta.innerText = "Cadastrar custo";
   if (document.getElementById("btnCancelarMeta")) btnCancelarMeta.classList.add("hidden");
 }
 
@@ -268,7 +271,6 @@ function iniciarEdicaoMeta(id) {
   document.getElementById("metaNome").value = meta.nome;
   document.getElementById("metaValor").value = moeda(meta.valor);
   document.getElementById("metaObjetivo").value = objetivoMetaSeguro(meta.objetivo);
-  if (document.getElementById("metaTipo")) metaTipo.value = tipoMetaSeguro(meta.tipoMeta);
   if (document.getElementById("btnSalvarMeta")) btnSalvarMeta.innerText = "Salvar alterações";
   if (document.getElementById("btnCancelarMeta")) btnCancelarMeta.classList.remove("hidden");
 }
@@ -468,11 +470,22 @@ function normalizarMetasConfig() {
       tipoMeta: tipoMetaSeguro(meta.tipoMeta || meta.comportamento || tipoMetaPorNome(meta.nome || meta.name))
     }))
     .filter(meta => meta.nome && meta.valor >= 0);
+
+  const metaSobra = config.metas.find(ehMetaSobra);
+  if (metaSobra) {
+    if (!config.retiradaDesejada) config.retiradaDesejada = Number(metaSobra.valor) || 0;
+    config.retiradaObjetivo = objetivoMetaSeguro(config.retiradaObjetivo || metaSobra.objetivo || "estabilidade");
+    config.metas = config.metas.filter(meta => !ehMetaSobra(meta));
+  }
 }
 
 function migrarMetasConfiguradas() {
   normalizarMetasConfig();
   if (config.metas.length) {
+    if (!config.retiradaDesejada && Number(config.metaConsistente) > 0) {
+      config.retiradaDesejada = Number(config.metaConsistente) || 0;
+      config.retiradaObjetivo = "estabilidade";
+    }
     aplicarMetasPadrao();
     limparMetasLegadas();
     return;
@@ -482,9 +495,13 @@ function migrarMetasConfiguradas() {
     { nome: rotulosVeiculo().descricaoEnergia, valor: Number(config.metaGasolina) || 0, objetivo: "sobrevivencia" },
     { nome: "Seguro", valor: Number(config.metaSeguro) || 0, objetivo: "sobrevivencia" },
     { nome: "Custos gerais", valor: Number(config.metaCustosGerais) || 0, objetivo: "sobrevivencia" },
-    { nome: "Sobra desejada", valor: Number(config.metaConsistente) || 0, objetivo: "estabilidade", tipoMeta: "sobra" },
     { nome: "Parcela", valor: Number(config.metaParcela) || 0, objetivo: "conforto" }
   ].filter(meta => meta.valor > 0);
+
+  if (!config.retiradaDesejada && Number(config.metaConsistente) > 0) {
+    config.retiradaDesejada = Number(config.metaConsistente) || 0;
+    config.retiradaObjetivo = "estabilidade";
+  }
 
   config.metas = antigas.map(meta => ({ id: gerarId(), tipoMeta: "custo", ...meta }));
   aplicarMetasPadrao();
@@ -518,9 +535,15 @@ function totaisMetasConfig(configBase = config) {
     .filter(meta => objetivoMetaSeguro(meta.objetivo) === "conforto")
     .reduce((soma, meta) => soma + (Number(meta.valor) || 0), 0);
 
-  const sobrevivencia = totalSobrevivencia;
-  const estabilidade = sobrevivencia + totalEstabilidadeDireta;
-  const conforto = estabilidade + totalConfortoDireto;
+  const retirada = Number(configBase.retiradaDesejada) || 0;
+  const retiradaObjetivo = objetivoMetaSeguro(configBase.retiradaObjetivo || "estabilidade");
+  const retiradaSobrevivencia = retiradaObjetivo === "sobrevivencia" ? retirada : 0;
+  const retiradaEstabilidade = retiradaObjetivo === "estabilidade" ? retirada : 0;
+  const retiradaConforto = retiradaObjetivo === "conforto" ? retirada : 0;
+
+  const sobrevivencia = totalSobrevivencia + retiradaSobrevivencia;
+  const estabilidade = sobrevivencia + totalEstabilidadeDireta + retiradaEstabilidade;
+  const conforto = estabilidade + totalConfortoDireto + retiradaConforto;
   return { sobrevivencia, estabilidade, conforto };
 }
 
@@ -706,7 +729,7 @@ function renderizarComposicaoMetas(ctx) {
   migrarMetasConfiguradas();
 
   if (!config.metas.length) {
-    container.innerHTML = '<div class="meta-empty">Nenhuma meta cadastrada ainda.</div>';
+    container.innerHTML = '<div class="meta-empty">Nenhum custo cadastrado ainda.</div>';
     return;
   }
 
@@ -756,7 +779,7 @@ function renderizarMetasConfig() {
     <div class="meta-config-row">
       <div>
         <strong>${textoSeguro(meta.nome)}</strong>
-        <small>${rotuloObjetivoMeta(meta.objetivo)} · ${rotuloTipoMeta(meta.tipoMeta)}</small>
+        <small>${rotuloObjetivoMeta(meta.objetivo)}</small>
       </div>
       <span>${moeda(meta.valor)}</span>
       <div class="meta-config-actions">
@@ -1367,6 +1390,8 @@ function normalizarConfigAtual() {
   config.diasPlanejados = Number(config.diasPlanejados) || 0;
   config.metaConsistente = Number(config.metaConsistente) || 0;
   config.tipoVeiculo = tipoVeiculoSeguro(config.tipoVeiculo);
+  config.retiradaDesejada = Number(config.retiradaDesejada) || 0;
+  config.retiradaObjetivo = objetivoMetaSeguro(config.retiradaObjetivo || "estabilidade");
   migrarMetasConfiguradas();
 }
 
@@ -1464,6 +1489,8 @@ function preencherCamposConfig() {
   saldoInicial.value = config.saldoInicial ? moeda(config.saldoInicial) : "";
   diasPlanejados.value = config.diasPlanejados || "";
   if (document.getElementById("tipoVeiculo")) tipoVeiculo.value = tipoVeiculoSeguro(config.tipoVeiculo);
+  if (document.getElementById("retiradaDesejada")) retiradaDesejada.value = config.retiradaDesejada ? moeda(config.retiradaDesejada) : "";
+  if (document.getElementById("retiradaObjetivo")) retiradaObjetivo.value = objetivoMetaSeguro(config.retiradaObjetivo || "estabilidade");
   atualizarRotulosVeiculo();
   renderizarMetasConfig();
 }
@@ -1670,6 +1697,8 @@ async function limparDados() {
     diasPlanejados: 0,
     metaConsistente: 0,
     tipoVeiculo: "combustao",
+    retiradaDesejada: 0,
+    retiradaObjetivo: "estabilidade",
     metas: []
   };
   fechamentos = {};
