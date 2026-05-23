@@ -507,6 +507,14 @@ th {
   background: #fafafa;
 }
 
+.preservar-capitalizacao {
+  text-transform: none;
+}
+
+.historico-table td[data-label="kWh"]::before {
+  text-transform: none;
+}
+
 tr:last-child td { border-bottom: none; }
 
 .tabela-metas td:nth-child(2),

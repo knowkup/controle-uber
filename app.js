@@ -58,7 +58,7 @@ if (document.getElementById("btnCancelarMeta")) {
 if (document.getElementById("tipoVeiculo")) {
   tipoVeiculo.addEventListener("change", () => {
     config.tipoVeiculo = tipoVeiculoSeguro(tipoVeiculo.value);
-    atualizarRotulosVeiculo();
+    render();
     selecionar(tipo);
   });
 }
@@ -368,7 +368,10 @@ function atualizarRotulosVeiculo() {
   const metaNome = document.getElementById("metaNome");
   if (metaNome) metaNome.placeholder = rotulos.metaEnergia;
   const quantidadeHistorico = document.querySelector(".historico-table th:nth-child(4)");
-  if (quantidadeHistorico) quantidadeHistorico.innerText = rotulos.quantidadeCurta;
+  if (quantidadeHistorico) {
+    quantidadeHistorico.innerText = rotulos.quantidadeCurta;
+    quantidadeHistorico.classList.toggle("preservar-capitalizacao", rotulos.quantidadeCurta === "kWh");
+  }
 }
 
 function normalizarMetasConfig() {
