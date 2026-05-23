@@ -29,6 +29,7 @@ let config = {
 const STORAGE_KEY = "controleUberFelipe";
 const CONFIG_KEY = "controleUberFelipeConfig";
 const HISTORICO_KEY = "controleUberFelipeFechamentos";
+const CATEGORIAS_DESPESA_PADRAO = ["Seguro", "Manutenção", "Lavagem", "Parcela", "Outros"];
 let firebaseCarregado = false;
 let salvandoFirebase = false;
 let bloqueiaRestauracaoLocal = false;
@@ -139,6 +140,7 @@ function selecionar(novoTipo) {
     btnDespesas.classList.add("ativo");
     labelValor.innerText = "Valor da despesa";
     valor.placeholder = "Ex: R$ 80,00";
+    atualizarOpcoesDescricaoDespesa();
     campoDescricao.classList.remove("hidden");
   }
 
@@ -309,6 +311,14 @@ function tipoMetaPorNome(nome) {
   return nomeNormalizado.includes("sobra") || nomeNormalizado.includes("reserva") ? "sobra" : "custo";
 }
 
+function chaveMeta(nome) {
+  return String(nome || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
 function rotuloTipoMeta(valor) {
   return tipoMetaSeguro(valor) === "sobra" ? "Sobra desejada" : "Custo mensal";
 }
@@ -393,6 +403,59 @@ function atualizarRotulosVeiculo() {
     quantidadeHistorico.innerText = rotulos.quantidadeCurta;
     quantidadeHistorico.classList.toggle("preservar-capitalizacao", rotulos.quantidadeCurta === "kWh");
   }
+  atualizarOpcoesDescricaoDespesa();
+}
+
+function metasPadraoConfig() {
+  return [
+    { nome: rotulosVeiculo().descricaoEnergia, valor: 0, objetivo: "sobrevivencia", tipoMeta: "custo" },
+    { nome: "Seguro", valor: 0, objetivo: "sobrevivencia", tipoMeta: "custo" },
+    { nome: "Manutenção", valor: 0, objetivo: "sobrevivencia", tipoMeta: "custo" },
+    { nome: "Lavagem", valor: 0, objetivo: "sobrevivencia", tipoMeta: "custo" },
+    { nome: "Parcela", valor: 0, objetivo: "conforto", tipoMeta: "custo" }
+  ];
+}
+
+function aplicarMetasPadrao() {
+  const existentes = new Set(config.metas.map(meta => chaveMeta(meta.nome)));
+  const existeMetaEnergia = ["gasolina", "energia", "recarga"].some(nome => existentes.has(nome));
+  metasPadraoConfig().forEach(metaPadrao => {
+    if (["gasolina", "energia", "recarga"].includes(chaveMeta(metaPadrao.nome)) && existeMetaEnergia) return;
+    if (!existentes.has(chaveMeta(metaPadrao.nome))) {
+      config.metas.push({ id: gerarId(), ...metaPadrao });
+      existentes.add(chaveMeta(metaPadrao.nome));
+    }
+  });
+}
+
+function opcoesDescricaoDespesa() {
+  const opcoes = [];
+  const vistas = new Set();
+  const adicionarOpcao = nome => {
+    const nomeSeguro = limitarTexto(nome, 60);
+    const chave = chaveMeta(nomeSeguro);
+    if (!nomeSeguro || vistas.has(chave)) return;
+    opcoes.push(nomeSeguro);
+    vistas.add(chave);
+  };
+
+  (Array.isArray(config.metas) ? config.metas : [])
+    .filter(meta => !ehMetaSobra(meta))
+    .forEach(meta => adicionarOpcao(meta.nome));
+
+  [rotulosVeiculo().descricaoEnergia, ...CATEGORIAS_DESPESA_PADRAO].forEach(adicionarOpcao);
+  return opcoes;
+}
+
+function atualizarOpcoesDescricaoDespesa() {
+  const select = document.getElementById("descricao");
+  if (!select) return;
+  const valorAtual = select.value;
+  const opcoes = opcoesDescricaoDespesa();
+  select.innerHTML = opcoes
+    .map(opcao => `<option value="${textoSeguro(opcao)}">${textoSeguro(opcao)}</option>`)
+    .join("");
+  if (opcoes.includes(valorAtual)) select.value = valorAtual;
 }
 
 function normalizarMetasConfig() {
@@ -404,12 +467,13 @@ function normalizarMetasConfig() {
       objetivo: objetivoMetaSeguro(meta.objetivo || meta.categoria || meta.tipo),
       tipoMeta: tipoMetaSeguro(meta.tipoMeta || meta.comportamento || tipoMetaPorNome(meta.nome || meta.name))
     }))
-    .filter(meta => meta.nome && meta.valor > 0);
+    .filter(meta => meta.nome && meta.valor >= 0);
 }
 
 function migrarMetasConfiguradas() {
   normalizarMetasConfig();
   if (config.metas.length) {
+    aplicarMetasPadrao();
     limparMetasLegadas();
     return;
   }
@@ -423,6 +487,7 @@ function migrarMetasConfiguradas() {
   ].filter(meta => meta.valor > 0);
 
   config.metas = antigas.map(meta => ({ id: gerarId(), tipoMeta: "custo", ...meta }));
+  aplicarMetasPadrao();
   limparMetasLegadas();
 }
 
@@ -480,6 +545,8 @@ function totaisCustosConfig(configBase = config) {
 function valorRealizadoMeta(meta, ctx) {
   if (ehMetaSobra(meta)) return 0;
   const nome = String(meta.nome || "").toLowerCase();
+  const realizadoPorDescricao = ctx.despesasPorDescricao?.[chaveMeta(meta.nome)];
+  if (realizadoPorDescricao !== undefined) return realizadoPorDescricao;
   if (nome.includes("gasolina") || nome.includes("combust") || nome.includes("energia") || nome.includes("recarga")) return ctx.gastoGasolina || 0;
   if (nome.includes("seguro")) return ctx.gastoSeguro || 0;
   if (nome.includes("parcela")) return ctx.gastoParcela || 0;
@@ -501,6 +568,7 @@ function render() {
   let gastoSeguro = 0;
   let gastoCustosGerais = 0;
   let gastoParcela = 0;
+  const despesasPorDescricao = {};
 
   const diasComGanhos = new Set();
 
@@ -524,6 +592,10 @@ function render() {
       if (d.litros) litrosTotal += d.litros;
       if (d.km) kms.push(d.km);
 
+      if (d.valor < 0 && d.descricao) {
+        const chave = chaveMeta(descricaoVisivelLancamento(d));
+        despesasPorDescricao[chave] = (despesasPorDescricao[chave] || 0) + Math.abs(d.valor);
+      }
       if (ehLancamentoEnergia(d)) gastoGasolina += Math.abs(d.valor);
       if (d.descricao === "Seguro") gastoSeguro += Math.abs(d.valor);
       if (d.descricao === "Parcela") gastoParcela += Math.abs(d.valor);
@@ -596,7 +668,7 @@ function render() {
   custoPorKmEl().innerText = moeda(custoPorKm);
   lucroPorKmEl().innerText = moeda(lucroPorKm);
 
-  renderizarComposicaoMetas({ gastoGasolina, gastoSeguro, gastoCustosGerais, gastoParcela, entradas, saidas });
+  renderizarComposicaoMetas({ gastoGasolina, gastoSeguro, gastoCustosGerais, gastoParcela, entradas, saidas, despesasPorDescricao });
 
   if (document.getElementById("diasTrabalhados")) diasTrabalhados.innerText = diasTrabalhadosValor;
   if (document.getElementById("mediaDia")) mediaDia.innerText = moeda(mediaDiaValor);

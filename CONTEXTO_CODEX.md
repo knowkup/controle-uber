@@ -76,6 +76,8 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
 
 ## Mudancas recentes
 
+- Em 2026-05-23, a descricao de `Registrar despesa` passou a ser gerada pelas metas de custo cadastradas, com categorias padrao Seguro, Manutencao, Lavagem, Parcela e Outros; metas padrao de custo com valor zero sao criadas para novos usos sem alterar os totais ate receberem valor.
+- Backup criado antes de vincular despesas as metas: `20260523-124840`.
 - Em 2026-05-23, separada a natureza das metas entre `Custo mensal` e `Sobra desejada`: a sobra pode compor Sobrevivencia/Estabilidade/Conforto sem ser tratada como custo, aparece na composicao como `Desejado/A formar`, e a Sobra Projetada passa a usar apenas custos base.
 - Backup criado antes da separacao conceitual de custo/sobra nas metas: `20260523-123755`.
 - Em 2026-05-23, feito pente fino da troca Combustao/Eletrico: corrigida a atualizacao imediata do historico ao alternar tipo de veiculo sem salvar e preservada a capitalizacao correta de `kWh` no cabecalho/mobile do historico.
