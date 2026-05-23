@@ -687,14 +687,16 @@ input[type="date"] {
 
 .dashboard-status {
   display: inline-flex;
-  margin-top: 12px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(237,247,239,0.88);
-  border: 1px solid #cde8d4;
-  font-size: 13px;
-  font-weight: 640;
-  color: var(--green);
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: rgba(237,247,239,0.94);
+  border: 1px solid #b9dfc3;
+  box-shadow: 0 12px 24px rgba(21, 148, 71, 0.08);
+  font-size: clamp(15px, 2.7vw, 18px);
+  font-weight: 760;
+  color: #116333;
+  line-height: 1.25;
 }
 
 .dashboard-grid-3 {

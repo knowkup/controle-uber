@@ -76,6 +76,8 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
 
 ## Mudancas recentes
 
+- Em 2026-05-23, removida repeticao do status do ritmo na Dashboard: a mensagem emocional fica destacada no topo e a regua mostra apenas projecao/proximo marco; adicionados query params em CSS/JS para forcar atualizacao em producao.
+- Backup criado antes do ajuste de status da Dashboard: `20260523-191719`.
 - Em 2026-05-23, corrigido o calculo da `Retirada prevista` para usar o maior valor entre custos base e custos ja lancados; corrigida tambem a faixa Conforto para nao herdar a retirada desejada quando ela estiver marcada para Estabilidade.
 - Backup criado antes da correcao de retirada prevista/conforto: `20260523-191356`.
 - Em 2026-05-23, `Sobra desejada` saiu do cadastro de metas e virou `Retirada desejada do mes` dentro de Configuracoes do Mes, com seletor `Conta para` padrao Estabilidade; o cadastro visual passou a ser `Custos do mes` e a Dashboard passou a mostrar `Retirada prevista`.

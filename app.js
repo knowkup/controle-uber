@@ -1152,6 +1152,13 @@ function atualizarDashboard(ctx) {
     : "Registre ganhos para calcular o ritmo do mês.";
 
   faixaMinima.innerText = `Sobrevivência ${moeda(custosSemParcela)}`;
+  const proximaMetaResumo = proximaMetaAtiva(projecaoMes, custosSemParcela, metaConsistenteValor, custosTotais);
+  if (diasTrabalhadosValor > 0) {
+    faixaTexto.innerText = proximaMetaResumo
+      ? `Projeção ${moeda(projecaoMes)} · próximo marco: ${proximaMetaResumo.nome} (${moeda(proximaMetaResumo.valor)})`
+      : `Projeção ${moeda(projecaoMes)} · acima da faixa de conforto`;
+  }
+
   faixaConsistente.innerText = `Estabilidade ${moeda(metaConsistenteValor)}`;
   faixaIdeal.innerText = `Conforto ${moeda(custosTotais)}`;
 
