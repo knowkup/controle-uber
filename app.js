@@ -219,6 +219,7 @@ async function cadastrarMeta() {
   const nome = limitarTexto(document.getElementById("metaNome").value, 60);
   const valor = parseMoeda(document.getElementById("metaValor").value);
   const objetivo = objetivoMetaSeguro(document.getElementById("metaObjetivo").value);
+  const tipoMeta = tipoMetaSeguro(document.getElementById("metaTipo")?.value);
 
   if (!nome) return alert("Informe o nome da meta.");
   if (!valor) return alert("Informe o valor da meta.");
@@ -226,7 +227,7 @@ async function cadastrarMeta() {
   migrarMetasConfiguradas();
   if (metaEmEdicaoId) {
     config.metas = config.metas.map(meta => String(meta.id) === String(metaEmEdicaoId)
-      ? { ...meta, nome, valor, objetivo }
+      ? { ...meta, nome, valor, objetivo, tipoMeta }
       : meta
     );
   } else {
@@ -234,7 +235,8 @@ async function cadastrarMeta() {
       id: gerarId(),
       nome,
       valor,
-      objetivo
+      objetivo,
+      tipoMeta
     });
   }
 
@@ -250,6 +252,7 @@ function resetarFormularioMeta() {
   document.getElementById("metaNome").value = "";
   document.getElementById("metaValor").value = "";
   document.getElementById("metaObjetivo").value = "sobrevivencia";
+  if (document.getElementById("metaTipo")) metaTipo.value = "custo";
   if (document.getElementById("btnSalvarMeta")) btnSalvarMeta.innerText = "Cadastrar meta";
   if (document.getElementById("btnCancelarMeta")) btnCancelarMeta.classList.add("hidden");
 }
@@ -263,6 +266,7 @@ function iniciarEdicaoMeta(id) {
   document.getElementById("metaNome").value = meta.nome;
   document.getElementById("metaValor").value = moeda(meta.valor);
   document.getElementById("metaObjetivo").value = objetivoMetaSeguro(meta.objetivo);
+  if (document.getElementById("metaTipo")) metaTipo.value = tipoMetaSeguro(meta.tipoMeta);
   if (document.getElementById("btnSalvarMeta")) btnSalvarMeta.innerText = "Salvar alterações";
   if (document.getElementById("btnCancelarMeta")) btnCancelarMeta.classList.remove("hidden");
 }
@@ -294,6 +298,23 @@ function numeroPercentualSeguro(valor) {
 
 function objetivoMetaSeguro(valor) {
   return ["sobrevivencia", "estabilidade", "conforto"].includes(valor) ? valor : "sobrevivencia";
+}
+
+function tipoMetaSeguro(valor) {
+  return valor === "sobra" ? "sobra" : "custo";
+}
+
+function tipoMetaPorNome(nome) {
+  const nomeNormalizado = String(nome || "").toLowerCase();
+  return nomeNormalizado.includes("sobra") || nomeNormalizado.includes("reserva") ? "sobra" : "custo";
+}
+
+function rotuloTipoMeta(valor) {
+  return tipoMetaSeguro(valor) === "sobra" ? "Sobra desejada" : "Custo mensal";
+}
+
+function ehMetaSobra(meta) {
+  return tipoMetaSeguro(meta?.tipoMeta) === "sobra";
 }
 
 function rotuloObjetivoMeta(valor) {
@@ -380,7 +401,8 @@ function normalizarMetasConfig() {
       id: meta.id ? String(meta.id) : gerarId(),
       nome: limitarTexto(meta.nome || meta.name, 60),
       valor: Number(meta.valor ?? meta.value) || 0,
-      objetivo: objetivoMetaSeguro(meta.objetivo || meta.categoria || meta.tipo)
+      objetivo: objetivoMetaSeguro(meta.objetivo || meta.categoria || meta.tipo),
+      tipoMeta: tipoMetaSeguro(meta.tipoMeta || meta.comportamento || tipoMetaPorNome(meta.nome || meta.name))
     }))
     .filter(meta => meta.nome && meta.valor > 0);
 }
@@ -396,11 +418,11 @@ function migrarMetasConfiguradas() {
     { nome: rotulosVeiculo().descricaoEnergia, valor: Number(config.metaGasolina) || 0, objetivo: "sobrevivencia" },
     { nome: "Seguro", valor: Number(config.metaSeguro) || 0, objetivo: "sobrevivencia" },
     { nome: "Custos gerais", valor: Number(config.metaCustosGerais) || 0, objetivo: "sobrevivencia" },
-    { nome: "Sobra desejada", valor: Number(config.metaConsistente) || 0, objetivo: "estabilidade" },
+    { nome: "Sobra desejada", valor: Number(config.metaConsistente) || 0, objetivo: "estabilidade", tipoMeta: "sobra" },
     { nome: "Parcela", valor: Number(config.metaParcela) || 0, objetivo: "conforto" }
   ].filter(meta => meta.valor > 0);
 
-  config.metas = antigas.map(meta => ({ id: gerarId(), ...meta }));
+  config.metas = antigas.map(meta => ({ id: gerarId(), tipoMeta: "custo", ...meta }));
   limparMetasLegadas();
 }
 
@@ -437,7 +459,26 @@ function totaisMetasConfig(configBase = config) {
   return { sobrevivencia, estabilidade, conforto };
 }
 
+function totaisCustosConfig(configBase = config) {
+  const metas = Array.isArray(configBase.metas) ? configBase.metas : [];
+  if (!metas.length) {
+    return {
+      sobrevivencia: (Number(configBase.metaGasolina) || 0) + (Number(configBase.metaSeguro) || 0) + (Number(configBase.metaCustosGerais) || 0),
+      estabilidade: 0,
+      conforto: Number(configBase.metaParcela) || 0
+    };
+  }
+
+  return metas.reduce((totais, meta) => {
+    if (ehMetaSobra(meta)) return totais;
+    const objetivo = objetivoMetaSeguro(meta.objetivo);
+    totais[objetivo] += Number(meta.valor) || 0;
+    return totais;
+  }, { sobrevivencia: 0, estabilidade: 0, conforto: 0 });
+}
+
 function valorRealizadoMeta(meta, ctx) {
+  if (ehMetaSobra(meta)) return 0;
   const nome = String(meta.nome || "").toLowerCase();
   if (nome.includes("gasolina") || nome.includes("combust") || nome.includes("energia") || nome.includes("recarga")) return ctx.gastoGasolina || 0;
   if (nome.includes("seguro")) return ctx.gastoSeguro || 0;
@@ -555,7 +596,7 @@ function render() {
   custoPorKmEl().innerText = moeda(custoPorKm);
   lucroPorKmEl().innerText = moeda(lucroPorKm);
 
-  renderizarComposicaoMetas({ gastoGasolina, gastoSeguro, gastoCustosGerais, gastoParcela });
+  renderizarComposicaoMetas({ gastoGasolina, gastoSeguro, gastoCustosGerais, gastoParcela, entradas, saidas });
 
   if (document.getElementById("diasTrabalhados")) diasTrabalhados.innerText = diasTrabalhadosValor;
   if (document.getElementById("mediaDia")) mediaDia.innerText = moeda(mediaDiaValor);
@@ -607,14 +648,18 @@ function renderizarComposicaoMetas(ctx) {
         <div class="composicao-grupo-titulo">${rotuloObjetivoMeta(objetivo)}</div>
         <div class="composicao-itens">
           ${metasDoGrupo.map(meta => {
+            const valorMeta = Number(meta.valor) || 0;
             const realizado = valorRealizadoMeta(meta, ctx);
-            const saldo = (Number(meta.valor) || 0) - realizado;
+            const saldo = valorMeta - realizado;
+            const sobraAtual = Math.max((Number(ctx.entradas) || 0) + (Number(ctx.saidas) || 0), 0);
+            const saldoSobra = Math.max(valorMeta - sobraAtual, 0);
+            const ehSobra = ehMetaSobra(meta);
             return `
-              <div class="composicao-item">
+              <div class="composicao-item ${ehSobra ? "meta-sobra" : ""}">
                 <strong>${textoSeguro(meta.nome)}</strong>
                 <div class="composicao-valores">
-                  <span><small>Definido</small>${moeda(meta.valor)}</span>
-                  <span><small>Saldo</small>${moeda(saldo)}</span>
+                  <span><small>${ehSobra ? "Desejado" : "Definido"}</small>${moeda(valorMeta)}</span>
+                  <span><small>${ehSobra ? "A formar" : "Saldo"}</small>${moeda(ehSobra ? saldoSobra : saldo)}</span>
                 </div>
               </div>
             `;
@@ -639,7 +684,7 @@ function renderizarMetasConfig() {
     <div class="meta-config-row">
       <div>
         <strong>${textoSeguro(meta.nome)}</strong>
-        <small>${rotuloObjetivoMeta(meta.objetivo)}</small>
+        <small>${rotuloObjetivoMeta(meta.objetivo)} · ${rotuloTipoMeta(meta.tipoMeta)}</small>
       </div>
       <span>${moeda(meta.valor)}</span>
       <div class="meta-config-actions">
@@ -974,18 +1019,19 @@ function atualizarDashboard(ctx) {
   const mediaDiaValor = ctx.mediaDiaValor || 0;
 
   const metaConsistenteValor = totaisMetasConfig().estabilidade;
+  const custosBaseSobra = totaisCustosConfig().sobrevivencia;
 
   const projecaoMes = mediaDiaValor * (Number(config.diasPlanejados) || 0);
   const custosAtuais = Math.abs(saidas);
-  const sobraProjetada = projecaoMes - custosSemParcela;
+  const sobraProjetada = projecaoMes - custosBaseSobra;
   
   dashboardProjecao.innerText = moeda(projecaoMes);
   if (document.getElementById("dashboardAtualMes")) dashboardAtualMes.innerText = moeda(entradas);
   if (document.getElementById("dashboardSobraProjetada")) dashboardSobraProjetada.innerText = moeda(sobraProjetada);
   if (document.getElementById("dashboardSobraBase")) {
-    dashboardSobraBase.innerText = custosAtuais > custosSemParcela
-         ? `Custos já lançados: ${moeda(custosAtuais)}`
-         : `Base sobrevivência: ${moeda(custosSemParcela)}`;
+    dashboardSobraBase.innerText = custosAtuais > custosBaseSobra
+      ? `Custos já lançados: ${moeda(custosAtuais)}`
+      : `Custos base: ${moeda(custosBaseSobra)}`;
   }
   const sobraBox = document.querySelector(".dashboard-sobra-box");
   if (sobraBox) {

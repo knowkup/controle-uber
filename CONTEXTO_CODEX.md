@@ -76,6 +76,8 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
 
 ## Mudancas recentes
 
+- Em 2026-05-23, separada a natureza das metas entre `Custo mensal` e `Sobra desejada`: a sobra pode compor Sobrevivencia/Estabilidade/Conforto sem ser tratada como custo, aparece na composicao como `Desejado/A formar`, e a Sobra Projetada passa a usar apenas custos base.
+- Backup criado antes da separacao conceitual de custo/sobra nas metas: `20260523-123755`.
 - Em 2026-05-23, feito pente fino da troca Combustao/Eletrico: corrigida a atualizacao imediata do historico ao alternar tipo de veiculo sem salvar e preservada a capitalizacao correta de `kWh` no cabecalho/mobile do historico.
 - Backup criado antes do pente fino de nomenclatura energia/combustivel: `20260523-122819`.
 - Em 2026-05-22, adicionada configuracao de tipo de veiculo (`Combustao` ou `Eletrico`) para trocar nomenclaturas de gasolina/litros/combustivel por recarga/kWh/energia sem duplicar a logica de lancamentos.
