@@ -76,6 +76,8 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
 
 ## Mudancas recentes
 
+- Em 2026-05-23, corrigido o calculo da `Retirada prevista` para usar o maior valor entre custos base e custos ja lancados; corrigida tambem a faixa Conforto para nao herdar a retirada desejada quando ela estiver marcada para Estabilidade.
+- Backup criado antes da correcao de retirada prevista/conforto: `20260523-191356`.
 - Em 2026-05-23, `Sobra desejada` saiu do cadastro de metas e virou `Retirada desejada do mes` dentro de Configuracoes do Mes, com seletor `Conta para` padrao Estabilidade; o cadastro visual passou a ser `Custos do mes` e a Dashboard passou a mostrar `Retirada prevista`.
 - Backup criado antes de mover retirada para Configuracoes do Mes: `20260523-181951`.
 - Em 2026-05-23, a descricao de `Registrar despesa` passou a ser gerada pelas metas de custo cadastradas, com categorias padrao Seguro, Manutencao, Lavagem, Parcela e Outros; metas padrao de custo com valor zero sao criadas para novos usos sem alterar os totais ate receberem valor.

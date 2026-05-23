@@ -541,9 +541,12 @@ function totaisMetasConfig(configBase = config) {
   const retiradaEstabilidade = retiradaObjetivo === "estabilidade" ? retirada : 0;
   const retiradaConforto = retiradaObjetivo === "conforto" ? retirada : 0;
 
+  const baseCustosEstabilidade = totalSobrevivencia + totalEstabilidadeDireta;
+  const baseCustosConforto = baseCustosEstabilidade + totalConfortoDireto;
+
   const sobrevivencia = totalSobrevivencia + retiradaSobrevivencia;
-  const estabilidade = sobrevivencia + totalEstabilidadeDireta + retiradaEstabilidade;
-  const conforto = estabilidade + totalConfortoDireto + retiradaConforto;
+  const estabilidade = baseCustosEstabilidade + retiradaEstabilidade;
+  const conforto = baseCustosConforto + retiradaConforto;
   return { sobrevivencia, estabilidade, conforto };
 }
 
@@ -1118,7 +1121,8 @@ function atualizarDashboard(ctx) {
 
   const projecaoMes = mediaDiaValor * (Number(config.diasPlanejados) || 0);
   const custosAtuais = Math.abs(saidas);
-  const sobraProjetada = projecaoMes - custosBaseSobra;
+  const baseRetiradaPrevista = Math.max(custosBaseSobra, custosAtuais);
+  const sobraProjetada = projecaoMes - baseRetiradaPrevista;
   
   dashboardProjecao.innerText = moeda(projecaoMes);
   if (document.getElementById("dashboardAtualMes")) dashboardAtualMes.innerText = moeda(entradas);
@@ -1126,7 +1130,7 @@ function atualizarDashboard(ctx) {
   if (document.getElementById("dashboardSobraBase")) {
     dashboardSobraBase.innerText = custosAtuais > custosBaseSobra
       ? `Custos já lançados: ${moeda(custosAtuais)}`
-      : `Custos base: ${moeda(custosBaseSobra)}`;
+      : `Custos base: ${moeda(baseRetiradaPrevista)}`;
   }
   const sobraBox = document.querySelector(".dashboard-sobra-box");
   if (sobraBox) {
