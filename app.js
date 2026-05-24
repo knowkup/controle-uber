@@ -58,6 +58,9 @@ document.querySelectorAll('[data-action="cadastrar-meta"]').forEach(botao => {
 if (document.getElementById("btnCancelarMeta")) {
   btnCancelarMeta.addEventListener("click", cancelarEdicaoMeta);
 }
+if (document.getElementById("btnFecharMes")) {
+  btnFecharMes.addEventListener("click", fecharMesAtualManual);
+}
 if (document.getElementById("tipoVeiculo")) {
   tipoVeiculo.addEventListener("change", () => {
     config.tipoVeiculo = tipoVeiculoSeguro(tipoVeiculo.value);
@@ -68,7 +71,7 @@ if (document.getElementById("tipoVeiculo")) {
 document.getElementById("btnExportar").addEventListener("click", exportarJSON);
 document.getElementById("btnImportar").addEventListener("click", () => document.getElementById("importarArquivo").click());
 document.getElementById("btnLimpar").addEventListener("click", limparDados);
-["valor", "saldoInicial", "metaValor", "retiradaDesejada"].forEach(id => {
+["valor", "metaValor", "retiradaDesejada"].forEach(id => {
   const campo = document.getElementById(id);
   if (campo) campo.addEventListener("blur", event => formatarCampoMoeda(event.target));
 });
@@ -209,7 +212,7 @@ async function adicionar() {
 }
 
 async function salvarConfiguracoes() {
-  config.saldoInicial = parseMoeda(saldoInicial.value);
+  config.saldoInicial = 0;
   config.diasPlanejados = parseInt(diasPlanejados.value) || 0;
   config.tipoVeiculo = tipoVeiculoSeguro(document.getElementById("tipoVeiculo")?.value);
   config.retiradaDesejada = parseMoeda(document.getElementById("retiradaDesejada")?.value);
@@ -661,7 +664,7 @@ function render() {
   let kmRodado = 0;
   if (kms.length > 1) kmRodado = Math.max(...kms) - Math.min(...kms);
 
-  const resultadoMes = config.saldoInicial + entradas + saidas;
+  const resultadoMes = entradas + saidas;
   const lucroOperacional = entradas + saidas;
 
   const receitaPorKm = kmRodado > 0 ? entradas / kmRodado : 0;
@@ -681,17 +684,18 @@ function render() {
   const metaIdeal = config.diasPlanejados > 0 ? custosTotais / config.diasPlanejados : 0;
   const metaAjustadaValor = diasRestantes > 0 ? Math.max((custosSemParcela - entradas) / diasRestantes, 0) : 0;
 
-  saldoInicialResumo.innerText = moeda(config.saldoInicial);
   if (document.getElementById("diasPlanejadosResumo")) diasPlanejadosResumo.innerText = config.diasPlanejados || 0;
   entradasEl().innerText = moeda(entradas);
   saidasEl().innerText = moeda(saidas);
   resultado.innerText = moeda(resultadoMes);
+  resultado.classList.toggle("positivo", resultadoMes >= 0);
+  resultado.classList.toggle("negativo", resultadoMes < 0);
 
   kmRodadoEl().innerText = kmRodado.toLocaleString("pt-BR");
   litrosTotalEl().innerText = numero(litrosTotal);
-  gastoGasolinaEl().innerText = moeda(gastoGasolina);
+  gastoGasolinaEl().innerText = moedaSaida(gastoGasolina);
   receitaPorKmEl().innerText = moeda(receitaPorKm);
-  custoPorKmEl().innerText = moeda(custoPorKm);
+  custoPorKmEl().innerText = moedaSaida(custoPorKm);
   lucroPorKmEl().innerText = moeda(lucroPorKm);
 
   renderizarComposicaoMetas({ gastoGasolina, gastoSeguro, gastoCustosGerais, gastoParcela, entradas, saidas, despesasPorDescricao });
@@ -756,7 +760,7 @@ function renderizarComposicaoMetas(ctx) {
               <div class="composicao-item ${ehSobra ? "meta-sobra" : ""}">
                 <strong>${textoSeguro(meta.nome)}</strong>
                 <div class="composicao-valores">
-                  <span><small>${ehSobra ? "Desejado" : "Definido"}</small>${moeda(valorMeta)}</span>
+                  <span class="${ehSobra ? "" : "custo-planejado"}"><small>${ehSobra ? "Desejado" : "Definido"}</small>${moeda(valorMeta)}</span>
                   <span><small>${ehSobra ? "A formar" : "Saldo"}</small>${moeda(ehSobra ? saldoSobra : saldo)}</span>
                 </div>
               </div>
@@ -784,7 +788,7 @@ function renderizarMetasConfig() {
         <strong>${textoSeguro(meta.nome)}</strong>
         <small>${rotuloObjetivoMeta(meta.objetivo)}</small>
       </div>
-      <span>${moeda(meta.valor)}</span>
+      <span class="custo-planejado">${moeda(meta.valor)}</span>
       <div class="meta-config-actions">
         <button type="button" class="btn-editar" data-meta-edit-id="${textoSeguro(meta.id)}">Editar</button>
         <button type="button" class="btn-excluir" data-meta-id="${textoSeguro(meta.id)}">Excluir</button>
@@ -806,6 +810,18 @@ async function excluirMeta(id) {
   if (String(metaEmEdicaoId) === String(id)) resetarFormularioMeta();
   preencherCamposConfig();
   render();
+  await salvarEstado();
+}
+
+async function fecharMesAtualManual() {
+  const mesAtual = mesKeyDeData(new Date());
+  const resumo = calcularResumoDoMes(mesAtual, dados, config, "Fechado");
+  resumo.fechadoManual = true;
+  resumo.fechadoEm = new Date().toISOString();
+  fechamentos[mesAtual] = resumo;
+  salvarBackupLocal();
+  renderizarHistoricoMensal();
+  setStatusSync("Mês fechado", "ok");
   await salvarEstado();
 }
 
@@ -872,7 +888,7 @@ function calcularResumoDoMes(mesKey, listaDados, configBase = config, status = "
 
   const kmRodado = kms.length > 1 ? Math.max(...kms) - Math.min(...kms) : 0;
   const lucroOperacional = entradas + saidas;
-  const resultado = (Number(configBase.saldoInicial) || 0) + lucroOperacional;
+  const resultado = lucroOperacional;
   const lucroPorKm = kmRodado > 0 ? lucroOperacional / kmRodado : 0;
 
   const totaisMetas = totaisMetasConfig(configBase);
@@ -961,10 +977,12 @@ function renderizarHistoricoMensal(ctx = {}) {
   }
 
   const resumos = lista.map(mesKey => {
-    const status = mesKey === mesAtual ? "Em andamento" : "Fechado";
+    const fechamentoSalvo = fechamentos[mesKey];
+    const mesAtualFechado = mesKey === mesAtual && fechamentoSalvo?.fechadoManual;
+    const status = mesKey === mesAtual && !mesAtualFechado ? "Em andamento" : "Fechado";
     const resumo = mesKey === mesAtual
-      ? calcularResumoDoMes(mesKey, dados, config, status)
-      : (fechamentos[mesKey] || calcularResumoDoMes(mesKey, dados, config, status));
+      ? (mesAtualFechado ? fechamentoSalvo : calcularResumoDoMes(mesKey, dados, config, status))
+      : (fechamentoSalvo || calcularResumoDoMes(mesKey, dados, config, status));
     return { mesKey, status, resumo };
   });
 
@@ -1008,7 +1026,7 @@ function renderizarHistoricoMensal(ctx = {}) {
         <div class="month-result-panel">
           <div class="month-result-label">Resultado do mês</div>
           <div class="month-result-value ${resumo.resultado >= 0 ? "positivo" : "negativo"}">${moeda(resumo.resultado)}</div>
-          <div class="month-result-note">${moeda(resumo.entradas)} em ganhos · ${moeda(saidasAbs)} em saídas</div>
+          <div class="month-result-note">${moeda(resumo.entradas)} em ganhos · ${moedaSaida(saidasAbs)} em saídas</div>
 
           <div class="month-progress-block">
             <div class="month-progress-top">
@@ -1021,7 +1039,7 @@ function renderizarHistoricoMensal(ctx = {}) {
 
         <div class="month-kpi-grid">
           <div class="month-kpi"><span>Entradas</span><strong class="positivo">${moeda(resumo.entradas)}</strong><small>Ganhos Uber</small></div>
-          <div class="month-kpi"><span>Saídas</span><strong class="negativo">${moeda(saidasAbs)}</strong><small>Custos lançados</small></div>
+          <div class="month-kpi"><span>Saídas</span><strong class="negativo">${moedaSaida(saidasAbs)}</strong><small>Custos lançados</small></div>
           <div class="month-kpi"><span>KM rodado</span><strong>${Math.round(resumo.kmRodado || 0).toLocaleString("pt-BR")}</strong><small>${numero(resumo.litrosTotal || 0)} ${rotulosHistorico.resumoQuantidadeHistorico}</small></div>
           <div class="month-kpi"><span>Lucro/KM</span><strong>${moeda(resumo.lucroPorKm)}</strong><small>Resultado operacional por km</small></div>
         </div>
@@ -1064,10 +1082,10 @@ function iconeCalendario() {
 }
 
 function metaProjetadaStatus(projecao, sobrevivencia, estabilidade, conforto) {
-  if (conforto > 0 && projecao >= conforto) return "Você alcançou a meta de conforto do mês.";
-  if (estabilidade > 0 && projecao >= estabilidade) return "Você alcançou estabilidade, em busca do conforto.";
-  if (sobrevivencia > 0 && projecao >= sobrevivencia) return "Você sobreviveu, em busca da estabilidade.";
-  return "Você está em busca da sobrevivência.";
+  if (conforto > 0 && projecao >= conforto) return "Mandou muito bem, o mês chegou no conforto.";
+  if (estabilidade > 0 && projecao >= estabilidade) return "Boa, o mês está firme. Agora é buscar conforto.";
+  if (sobrevivencia > 0 && projecao >= sobrevivencia) return "Parabéns, o mês tá pago. Bora buscar estabilidade.";
+  return "O mês ainda não se pagou. A primeira missão é chegar na sobrevivência.";
 }
 
 function proximaMetaAtiva(valor, sobrevivencia, estabilidade, conforto) {
@@ -1129,7 +1147,7 @@ function atualizarDashboard(ctx) {
   if (document.getElementById("dashboardSobraProjetada")) dashboardSobraProjetada.innerText = moeda(sobraProjetada);
   if (document.getElementById("dashboardSobraBase")) {
     dashboardSobraBase.innerText = custosAtuais > custosBaseSobra
-      ? `Custos já lançados: ${moeda(custosAtuais)}`
+      ? `Custos já lançados: ${moedaSaida(custosAtuais)}`
       : `Custos base: ${moeda(baseRetiradaPrevista)}`;
   }
   const sobraBox = document.querySelector(".dashboard-sobra-box");
@@ -1357,7 +1375,7 @@ function svgIconeLancamento(item) {
   if (item.tipo === "km" || item.descricao === "Atualização de KM") {
     return '<svg class="icon" viewBox="0 0 24 24"><path d="M5 16h14"/><path d="M7 16l1.2-5.2A3 3 0 0 1 11.1 8h1.8a3 3 0 0 1 2.9 2.8L17 16"/><path d="M7 16v2"/><path d="M17 16v2"/></svg>';
   }
-  return '<svg class="icon" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M5 7l1.2 13h11.6L19 7"/><path d="M9 7V4h6v3"/></svg>';
+  return '<svg class="icon" viewBox="0 0 24 24"><path d="M7 3h10a2 2 0 0 1 2 2v16l-3-2-2 2-2-2-2 2-3 2V5a2 2 0 0 1 2-2Z"/><path d="M9 8h6"/><path d="M9 12h6"/><path d="M9 16h4"/></svg>';
 }
 
 function gerarId() {
@@ -1393,7 +1411,7 @@ function normalizarDados() {
 }
 
 function normalizarConfigAtual() {
-  config.saldoInicial = Number(config.saldoInicial) || 0;
+  config.saldoInicial = 0;
   config.metaGasolina = Number(config.metaGasolina) || 0;
   config.metaSeguro = Number(config.metaSeguro) || 0;
   config.metaCustosGerais = Number(config.metaCustosGerais) || 0;
@@ -1426,6 +1444,10 @@ function moeda(valor) {
     style: "currency",
     currency: "BRL"
   });
+}
+
+function moedaSaida(valor) {
+  return moeda(Math.abs(Number(valor) || 0) * -1);
 }
 
 function numero(valor) {
@@ -1497,7 +1519,7 @@ function definirDataHoje() {
 }
 
 function preencherCamposConfig() {
-  saldoInicial.value = config.saldoInicial ? moeda(config.saldoInicial) : "";
+  if (document.getElementById("saldoInicial")) saldoInicial.value = "0";
   diasPlanejados.value = config.diasPlanejados || "";
   if (document.getElementById("tipoVeiculo")) tipoVeiculo.value = tipoVeiculoSeguro(config.tipoVeiculo);
   if (document.getElementById("retiradaDesejada")) retiradaDesejada.value = config.retiradaDesejada ? moeda(config.retiradaDesejada) : "";
@@ -1672,7 +1694,7 @@ function importarJSON(event) {
         normalizarDados();
         if (importado.config) config = { ...config, ...importado.config };
         if (importado.fechamentos) fechamentos = { ...fechamentos, ...importado.fechamentos };
-        if (importado.saldoInicial !== undefined) config.saldoInicial = parseFloat(importado.saldoInicial) || 0;
+        if (importado.saldoInicial !== undefined) config.saldoInicial = 0;
         normalizarConfigAtual();
       } else {
         return alert("Arquivo inválido");

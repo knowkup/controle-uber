@@ -76,6 +76,8 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
 
 ## Mudancas recentes
 
+- Em 2026-05-24, executados ajustes de produto: removido saldo inicial da UI e dos calculos de resultado, padronizados gastos executados com sinal negativo/vermelho, custos planejados em vermelho sem sinal negativo, icone de despesa trocado para recibo, regua/conforto migrados para cores sem vermelho como conquista, frases do status da Dashboard humanizadas e adicionado botao `Fechar mes atual` no Historico para salvar fechamento manual do mes corrente.
+- Backup criado antes dos ajustes gerais de produto: `20260524-084119`.
 - Em 2026-05-23, removida repeticao do status do ritmo na Dashboard: a mensagem emocional fica destacada no topo e a regua mostra apenas projecao/proximo marco; adicionados query params em CSS/JS para forcar atualizacao em producao.
 - Backup criado antes do ajuste de status da Dashboard: `20260523-191719`.
 - Em 2026-05-23, corrigido o calculo da `Retirada prevista` para usar o maior valor entre custos base e custos ja lancados; corrigida tambem a faixa Conforto para nao herdar a retirada desejada quando ela estiver marcada para Estabilidade.

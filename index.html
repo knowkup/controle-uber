@@ -7,7 +7,7 @@
 <title>Controle Uber</title>
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="styles.css?v=20260523-191719">
+<link rel="stylesheet" href="styles.css?v=20260524-084119">
 </head>
 
 <body>
@@ -42,7 +42,7 @@
   <div class="botoes">
     <div id="btnGanho" class="botao ganho ativo"><span class="botao-content"><span class="action-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg></span><span><span class="botao-kicker">Registrar</span><span class="botao-main">Ganho</span></span></span></div>
     <div id="btnGasolina" class="botao gasolina"><span class="botao-content"><span class="action-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M4 20V6a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v14"/><path d="M4 10h11"/><path d="M15 7h2l3 3v7a2 2 0 0 1-2 2h-1"/><path d="M18 10v3"/></svg></span><span><span class="botao-kicker">Registrar</span><span class="botao-main">Gasolina</span></span></span></div>
-    <div id="btnDespesas" class="botao despesas"><span class="botao-content"><span class="action-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M5 7l1.2 13h11.6L19 7"/><path d="M9 7V4h6v3"/><path d="M10 12v4"/><path d="M14 12v4"/></svg></span><span><span class="botao-kicker">Registrar</span><span class="botao-main">Despesa</span></span></span></div>
+    <div id="btnDespesas" class="botao despesas"><span class="botao-content"><span class="action-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M7 3h10a2 2 0 0 1 2 2v16l-3-2-2 2-2-2-2 2-2-2-3 2V5a2 2 0 0 1 2-2Z"/><path d="M9 8h6"/><path d="M9 12h6"/><path d="M9 16h4"/></svg></span><span><span class="botao-kicker">Registrar</span><span class="botao-main">Despesa</span></span></span></div>
     <div id="btnKM" class="botao kmBtn"><span class="botao-content"><span class="action-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M5 16h14"/><path d="M7 16l1.2-5.2A3 3 0 0 1 11.1 8h1.8a3 3 0 0 1 2.9 2.8L17 16"/><path d="M7 16v2"/><path d="M17 16v2"/><path d="M9 13h6"/></svg></span><span><span class="botao-kicker">Atualizar</span><span class="botao-main">KM</span></span></span></div>
   </div>
 
@@ -82,10 +82,6 @@
     <h3 class="heading-with-icon"><span class="heading-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"/></svg></span>Resumo Financeiro</h3>
 
     <div class="resumo-grid">
-      <div class="resumo-item">
-        <span>Saldo inicial</span>
-        <strong id="saldoInicialResumo">R$ 0,00</strong>
-      </div>
       <div class="resumo-item">
         <span>Entradas</span>
         <strong id="entradas">R$ 0,00</strong>
@@ -298,6 +294,7 @@
         <div class="history-eyebrow">Histórico mensal</div>
         <h2 class="history-title">Evolução da operação</h2>
         <p class="history-subtitle">Consolidados mensais com leitura de resultado, metas, uso do carro e eficiência. O mês atual aparece em andamento; os anteriores ficam preservados como fechamento.</p>
+        <button type="button" class="secundario history-close-btn" id="btnFecharMes">Fechar mês atual</button>
         <div class="history-quick-grid">
           <div class="history-quick-card">
             <span>Melhor mês</span>
@@ -324,8 +321,7 @@
 <div class="card">
   <h3 class="heading-with-icon"><span class="heading-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg></span>Configurações do Mês</h3>
 
-  <label>Saldo inicial do mês</label>
-  <input type="text" id="saldoInicial" inputmode="decimal" placeholder="R$ 0,00">
+  <input type="hidden" id="saldoInicial" value="0">
 
   <label>Dias planejados</label>
   <input type="text" id="diasPlanejados" inputmode="numeric" placeholder="Ex: 21">
@@ -404,7 +400,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="app.js?v=20260523-191719"></script>
+<script src="app.js?v=20260524-084119"></script>
 
 </div>
 </body>
