@@ -700,7 +700,12 @@ function render() {
   custoPorKmEl().innerText = moedaSaida(custoPorKm);
   lucroPorKmEl().innerText = moeda(lucroPorKm);
 
-  renderizarComposicaoMetas({ gastoGasolina, gastoSeguro, gastoCustosGerais, gastoParcela, entradas, saidas, despesasPorDescricao });
+  if (snapMesFechado) {
+    const containerComp = document.getElementById("composicaoMetasLista");
+    if (containerComp) containerComp.innerHTML = '<div class="meta-empty">Mês fechado — aguardando o próximo ciclo.</div>';
+  } else {
+    renderizarComposicaoMetas({ gastoGasolina, gastoSeguro, gastoCustosGerais, gastoParcela, entradas, saidas, despesasPorDescricao });
+  }
 
   if (document.getElementById("diasTrabalhados")) diasTrabalhados.innerText = diasTrabalhadosValor;
   if (document.getElementById("mediaDia")) mediaDia.innerText = moeda(mediaDiaValor);
@@ -716,7 +721,8 @@ function render() {
     diasTrabalhadosValor,
     diasRestantes,
     mediaDiaValor,
-    metaAjustadaValor
+    metaAjustadaValor,
+    snapMesFechado
   });
 
   renderizarMetasConfig();
@@ -1292,7 +1298,7 @@ function atualizarDashboard(ctx) {
     metaAjustadaCard.style.display = "none";
   }
 
-  const semanas = calcularSemanasDoMes();
+  const semanas = calcularSemanasDoMes(!!ctx.snapMesFechado);
   const metaSemanalBase = proximaMeta || { nome: "Conforto", valor: custosTotais };
   const metaSemanal = metaSemanalBase.valor > 0 ? metaSemanalBase.valor / Math.max(semanas.length, 1) : 0;
   const semanaAtual = semanas.find(s => s.isAtual) || semanas[0] || { valor: 0 };
@@ -1385,7 +1391,7 @@ function chaveSemana(dataObj) {
   return inicio.toISOString().slice(0, 10);
 }
 
-function calcularSemanasDoMes() {
+function calcularSemanasDoMes(ignorarDados = false) {
   const hoje = new Date();
   const ano = hoje.getFullYear();
   const mes = hoje.getMonth();
@@ -1418,16 +1424,18 @@ function calcularSemanasDoMes() {
     numeroSemana++;
   }
 
-  dados.forEach(d => {
-    if (d.descricao !== "Ganhos Uber" || !d.data) return;
-    const partes = d.data.split("-");
-    if (partes.length !== 3) return;
-    const dataObj = new Date(Number(partes[0]), Number(partes[1]) - 1, Number(partes[2]));
-    if (dataObj.getFullYear() !== ano || dataObj.getMonth() !== mes) return;
-    const key = chaveSemana(dataObj);
-    const semana = semanas.find(s => s.key === key);
-    if (semana) semana.valor += Number(d.valor) || 0;
-  });
+  if (!ignorarDados) {
+    dados.forEach(d => {
+      if (d.descricao !== "Ganhos Uber" || !d.data) return;
+      const partes = d.data.split("-");
+      if (partes.length !== 3) return;
+      const dataObj = new Date(Number(partes[0]), Number(partes[1]) - 1, Number(partes[2]));
+      if (dataObj.getFullYear() !== ano || dataObj.getMonth() !== mes) return;
+      const key = chaveSemana(dataObj);
+      const semana = semanas.find(s => s.key === key);
+      if (semana) semana.valor += Number(d.valor) || 0;
+    });
+  }
 
   return semanas;
 }
