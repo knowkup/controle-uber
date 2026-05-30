@@ -608,10 +608,12 @@ function render() {
     return String(b.id || "").localeCompare(String(a.id || ""));
   });
   const mesAtualKey = mesKeyDeData(new Date());
+  const snapMesFechado = fechamentos[mesAtualKey]?.fechadoManual ? fechamentos[mesAtualKey] : null;
 
   dadosOrdenados.forEach((d, index) => {
     // A lista pode exibir mês atual + anterior, mas os KPIs e o Dashboard são sempre do mês atual.
-    if (obterMesKey(d.data) === mesAtualKey) {
+    // Se o mês foi fechado manualmente, os KPIs zeram para iniciar o próximo ciclo.
+    if (obterMesKey(d.data) === mesAtualKey && !snapMesFechado) {
       if (d.valor > 0) {
         entradas += d.valor;
         if (d.descricao === "Ganhos Uber") diasComGanhos.add(d.data);
@@ -664,15 +666,6 @@ function render() {
   let kmRodado = 0;
   if (kms.length > 1) kmRodado = Math.max(...kms) - Math.min(...kms);
 
-  const snapMesFechado = fechamentos[mesAtualKey]?.fechadoManual ? fechamentos[mesAtualKey] : null;
-  if (snapMesFechado) {
-    entradas = snapMesFechado.entradas || 0;
-    saidas = snapMesFechado.saidas || 0;
-    litrosTotal = snapMesFechado.litrosTotal || 0;
-    gastoGasolina = snapMesFechado.gastoGasolina || 0;
-    kmRodado = snapMesFechado.kmRodado || 0;
-  }
-
   const resultadoMes = entradas + saidas;
   const lucroOperacional = entradas + saidas;
 
@@ -685,7 +678,7 @@ function render() {
   const metaConsistenteValor = totaisMetas.estabilidade;
   const custosTotais = totaisMetas.conforto;
 
-  const diasTrabalhadosValor = snapMesFechado ? (snapMesFechado.diasTrabalhados || 0) : diasComGanhos.size;
+  const diasTrabalhadosValor = snapMesFechado ? 0 : diasComGanhos.size;
   const diasRestantes = snapMesFechado ? 0 : Math.max(config.diasPlanejados - diasTrabalhadosValor, 0);
 
   const mediaDiaValor = diasTrabalhadosValor > 0 ? entradas / diasTrabalhadosValor : 0;
@@ -852,7 +845,7 @@ function renderizarBannerMesFechado(snap) {
     const dataFechamento = snap.fechadoEm
       ? new Date(snap.fechadoEm).toLocaleDateString("pt-BR", { day: "2-digit", month: "long" })
       : "";
-    banner.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg><span>Mês fechado${dataFechamento ? " em " + dataFechamento : ""}. Os números refletem o fechamento — novos lançamentos não alteram os totais.</span>`;
+    banner.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg><span>Mês fechado${dataFechamento ? " em " + dataFechamento : ""}. Histórico salvo — pronto para o próximo ciclo.</span>`;
   });
 }
 
@@ -905,6 +898,7 @@ function calcularResumoDoMes(mesKey, listaDados, configBase = config, status = "
   let gastoGasolina = 0;
   let diasComGanhos = new Set();
 
+  const despesasPorDescricao = {};
   dadosMes.forEach(d => {
     const valor = Number(d.valor) || 0;
     if (valor > 0) {
@@ -915,6 +909,10 @@ function calcularResumoDoMes(mesKey, listaDados, configBase = config, status = "
     if (d.litros) litrosTotal += Number(d.litros) || 0;
     if (d.km) kms.push(Number(d.km) || 0);
     if (ehLancamentoEnergia(d)) gastoGasolina += Math.abs(valor);
+    if (valor < 0 && d.descricao) {
+      const chave = chaveMeta(descricaoVisivelLancamento(d));
+      despesasPorDescricao[chave] = (despesasPorDescricao[chave] || 0) + Math.abs(valor);
+    }
   });
 
   const kmRodado = kms.length > 1 ? Math.max(...kms) - Math.min(...kms) : 0;
@@ -946,7 +944,8 @@ function calcularResumoDoMes(mesKey, listaDados, configBase = config, status = "
     diasTrabalhados: diasComGanhos.size,
     metaAtingida: faixaMeta,
     config: { ...configBase },
-    fechadoEm: status === "Fechado" ? new Date().toISOString() : null
+    fechadoEm: status === "Fechado" ? new Date().toISOString() : null,
+    despesasPorDescricao
   };
 }
 
@@ -983,6 +982,66 @@ function executarManutencaoMensal(forcar = false) {
 
   if (forcar && alterou) salvarBackupLocal();
   return alterou;
+}
+
+function fraseResultadoMes(entradas, sobrevivencia, estabilidade, conforto) {
+  if (conforto > 0 && entradas >= conforto) return "Mandou muito bem! O mês chegou no conforto.";
+  if (estabilidade > 0 && entradas >= estabilidade) return "Boa, o mês ficou firme na estabilidade.";
+  if (sobrevivencia > 0 && entradas >= sobrevivencia) return "O mês se pagou. Sobrevivência atingida.";
+  return "O mês ficou abaixo da mínima.";
+}
+
+function buildReguaHistorico(entradas, sobrevivencia, estabilidade, conforto) {
+  const maiorMeta = Math.max(sobrevivencia || 0, estabilidade || 0, conforto || 0, entradas || 0, 1);
+  const pos = v => (Math.max(0, Math.min(((Number(v) || 0) / maiorMeta) * 100, 100))).toFixed(1);
+  const markSobrev = sobrevivencia > 0 ? '<span class="ritmo-mark sobrevivencia" style="left:' + pos(sobrevivencia) + '%"></span>' : '';
+  const markEstab = estabilidade > 0 ? '<span class="ritmo-mark estabilidade" style="left:' + pos(estabilidade) + '%"></span>' : '';
+  const markConfort = conforto > 0 ? '<span class="ritmo-mark conforto" style="left:' + pos(conforto) + '%"></span>' : '';
+  return '<div class="ritmo-meter hist-regua"><div class="ritmo-regua"><div class="ritmo-track">'
+    + '<span class="ritmo-mark zero" style="left:0%"></span>'
+    + markSobrev + markEstab + markConfort
+    + '<span class="ritmo-projecao hist-resultado" style="left:' + pos(entradas) + '%"><small>Resultado</small></span>'
+    + '</div></div></div>'
+    + '<div class="ritmo-legenda"><span>0</span><span>Sobrevivência</span><span>Estabilidade</span><span>Conforto</span></div>';
+}
+
+function buildMetaCardsHistorico(entradas, sobrevivencia, estabilidade, conforto) {
+  const buildCard = (label, meta, classe) => {
+    if (!(meta > 0)) return '';
+    const pct = Math.min(Math.round((entradas / meta) * 100), 999);
+    const pctBar = Math.min(pct, 100);
+    const atingiu = entradas >= meta;
+    return '<div class="month-mini-meta ' + classe + (atingiu ? ' ok' : ' miss') + '">'
+      + '<div class="month-mini-meta-nome">' + label + '</div>'
+      + '<div class="month-mini-meta-valor">' + moeda(meta) + '</div>'
+      + '<div class="month-mini-meta-bar"><div class="month-mini-meta-fill" style="width:' + pctBar + '%"></div></div>'
+      + '<div class="month-mini-meta-pct">' + pct + '%' + (atingiu ? ' ✓' : '') + '</div>'
+      + '</div>';
+  };
+  const html = buildCard('Sobrevivência', sobrevivencia, 'sobrev')
+    + buildCard('Estabilidade', estabilidade, 'estab')
+    + buildCard('Conforto', conforto, 'confort');
+  return html ? '<div class="month-mini-meta-grid">' + html + '</div>' : '';
+}
+
+function buildComposicaoHistorico(resumo) {
+  const metas = Array.isArray(resumo.config && resumo.config.metas ? resumo.config.metas : null)
+    ? resumo.config.metas : [];
+  const custos = metas.filter(m => !ehMetaSobra(m) && Number(m.valor) > 0);
+  const despesas = resumo.despesasPorDescricao;
+  if (!custos.length || !despesas) return '';
+  const itens = custos.map(meta => {
+    const gasto = despesas[chaveMeta(meta.nome)] || 0;
+    const pct = meta.valor > 0 ? Math.min((gasto / meta.valor) * 100, 100).toFixed(1) : 0;
+    const acima = gasto > Number(meta.valor);
+    return '<div class="month-custo-row">'
+      + '<span class="month-custo-nome">' + textoSeguro(meta.nome) + '</span>'
+      + '<div class="month-custo-barra"><div class="month-custo-fill' + (acima ? ' acima' : '') + '" style="width:' + pct + '%"></div></div>'
+      + '<span class="month-custo-valores">' + moedaSaida(gasto) + ' <small>/ ' + moeda(meta.valor) + '</small></span>'
+      + '</div>';
+  }).join('');
+  if (!itens) return '';
+  return '<div class="month-composicao"><div class="month-composicao-titulo">Custos do mês</div>' + itens + '</div>';
 }
 
 function renderizarHistoricoMensal(ctx = {}) {
@@ -1039,14 +1098,10 @@ function renderizarHistoricoMensal(ctx = {}) {
     const mediaDiaCard = (resumo.diasTrabalhados || 0) > 0 ? resumo.entradas / resumo.diasTrabalhados : 0;
     const receitaPorKmCard = (resumo.kmRodado || 0) > 0 ? resumo.entradas / resumo.kmRodado : 0;
     const custoPorKmCard = (resumo.kmRodado || 0) > 0 ? (resumo.gastoGasolina || 0) / resumo.kmRodado : 0;
-    const atingiuSobrevivencia = metaMinima > 0 && resumo.entradas >= metaMinima;
-    const atingiuEstabilidade = metaConsistente > 0 && resumo.entradas >= metaConsistente;
-    const atingiuConforto = metaIdeal > 0 && resumo.entradas >= metaIdeal;
-    const metaTagsHtml = [
-      metaMinima > 0 ? '<span class="month-meta-tag ' + (atingiuSobrevivencia ? 'ok' : 'miss') + '">Sobrevivência · ' + moeda(metaMinima) + '</span>' : '',
-      metaConsistente > 0 ? '<span class="month-meta-tag ' + (atingiuEstabilidade ? 'ok' : 'miss') + '">Estabilidade · ' + moeda(metaConsistente) + '</span>' : '',
-      metaIdeal > 0 ? '<span class="month-meta-tag ' + (atingiuConforto ? 'ok' : 'miss') + '">Conforto · ' + moeda(metaIdeal) + '</span>' : ''
-    ].join('');
+    const frase = fraseResultadoMes(resumo.entradas, metaMinima, metaConsistente, metaIdeal);
+    const reguaHtml = buildReguaHistorico(resumo.entradas, metaMinima, metaConsistente, metaIdeal);
+    const metaCardsHtml = buildMetaCardsHistorico(resumo.entradas, metaMinima, metaConsistente, metaIdeal);
+    const composicaoHtml = buildComposicaoHistorico(resumo);
 
     const card = document.createElement("div");
     card.className = `month-card-premium ${statusClasse} ${metaClasse}`;
@@ -1064,23 +1119,15 @@ function renderizarHistoricoMensal(ctx = {}) {
           <span class="month-badge ${metaClasse}">${textoSeguro(statusLabel)}</span>
         </div>
       </div>
-
-      <div class="month-body">
+      <div class="month-sections">
+        <div class="month-conquista ${metaClasse}">${textoSeguro(frase)}</div>
         <div class="month-result-panel">
           <div class="month-result-label">Resultado do mês</div>
           <div class="month-result-value ${resumo.resultado >= 0 ? "positivo" : "negativo"}">${moeda(resumo.resultado)}</div>
           <div class="month-result-note">${moeda(resumo.entradas)} em ganhos · ${moedaSaida(saidasAbs)} em saídas</div>
-
-          <div class="month-progress-block">
-            <div class="month-progress-top">
-              <span>Progresso até a maior meta</span>
-              <span>${Math.round(progresso)}%</span>
-            </div>
-            <div class="month-progress-track"><div class="month-progress-fill" style="width:${progresso}%"></div></div>
-          </div>
-          ${metaTagsHtml ? `<div class="month-metas-row">${metaTagsHtml}</div>` : ""}
+          ${reguaHtml}
         </div>
-
+        ${metaCardsHtml}
         <div class="month-kpi-grid">
           <div class="month-kpi"><span>Entradas</span><strong class="positivo">${moeda(resumo.entradas)}</strong><small>Ganhos Uber</small></div>
           <div class="month-kpi"><span>Saídas</span><strong class="negativo">${moedaSaida(saidasAbs)}</strong><small>Custos lançados</small></div>
@@ -1088,8 +1135,10 @@ function renderizarHistoricoMensal(ctx = {}) {
           <div class="month-kpi"><span>KM rodado</span><strong>${Math.round(resumo.kmRodado || 0).toLocaleString("pt-BR")}</strong><small>${numero(resumo.litrosTotal || 0)} ${rotulosHistorico.resumoQuantidadeHistorico}</small></div>
           <div class="month-kpi"><span>Receita/KM</span><strong>${moeda(receitaPorKmCard)}</strong><small>Ganho por quilômetro</small></div>
           <div class="month-kpi"><span>Custo/KM</span><strong>${moedaSaida(custoPorKmCard)}</strong><small>Energia por quilômetro</small></div>
-          <div class="month-kpi"><span>Lucro/KM</span><strong>${moeda(resumo.lucroPorKm)}</strong><small>Resultado operacional por km</small></div>
+          <div class="month-kpi"><span>Lucro/KM</span><strong>${moeda(resumo.lucroPorKm)}</strong><small>Resultado por km</small></div>
+          <div class="month-kpi"><span>Resultado</span><strong class="${resumo.resultado >= 0 ? "positivo" : "negativo"}">${moeda(resumo.resultado)}</strong><small>Ganhos − custos</small></div>
         </div>
+        ${composicaoHtml}
       </div>
     `;
     container.appendChild(card);
