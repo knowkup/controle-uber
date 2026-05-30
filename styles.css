@@ -1522,7 +1522,7 @@ input[type="date"] {
 
 .month-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 10px;
 }
 
@@ -1566,6 +1566,51 @@ input[type="date"] {
   border: 1px dashed #d9d3c5;
   color: var(--muted);
   font-weight: 520;
+}
+
+.mes-fechado-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--green-soft);
+  border: 1px solid #b6e4c5;
+  border-radius: 12px;
+  padding: 13px 16px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  font-weight: 580;
+  color: var(--green);
+}
+.mes-fechado-banner svg {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  stroke: var(--green);
+}
+
+.month-metas-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 14px;
+}
+.month-meta-tag {
+  font-size: 11px;
+  font-weight: 640;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid;
+  letter-spacing: 0.02em;
+}
+.month-meta-tag.ok {
+  background: var(--green-soft);
+  color: var(--green);
+  border-color: #b6e4c5;
+}
+.month-meta-tag.miss {
+  background: #f5f4ef;
+  color: var(--muted);
+  border-color: #ddd8ce;
 }
 
 
@@ -1617,7 +1662,7 @@ input[type="date"] {
 
   .month-card-head { flex-direction: column; }
   .month-badges { justify-content: flex-start; }
-  .month-kpi-grid { grid-template-columns: 1fr; }
+  .month-kpi-grid { grid-template-columns: repeat(2, 1fr); }
   .history-title { font-size: 31px; }
   .history-quick-grid { grid-template-columns: 1fr; }
 

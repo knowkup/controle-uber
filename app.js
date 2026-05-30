@@ -664,6 +664,15 @@ function render() {
   let kmRodado = 0;
   if (kms.length > 1) kmRodado = Math.max(...kms) - Math.min(...kms);
 
+  const snapMesFechado = fechamentos[mesAtualKey]?.fechadoManual ? fechamentos[mesAtualKey] : null;
+  if (snapMesFechado) {
+    entradas = snapMesFechado.entradas || 0;
+    saidas = snapMesFechado.saidas || 0;
+    litrosTotal = snapMesFechado.litrosTotal || 0;
+    gastoGasolina = snapMesFechado.gastoGasolina || 0;
+    kmRodado = snapMesFechado.kmRodado || 0;
+  }
+
   const resultadoMes = entradas + saidas;
   const lucroOperacional = entradas + saidas;
 
@@ -676,8 +685,8 @@ function render() {
   const metaConsistenteValor = totaisMetas.estabilidade;
   const custosTotais = totaisMetas.conforto;
 
-  const diasTrabalhadosValor = diasComGanhos.size;
-  const diasRestantes = Math.max(config.diasPlanejados - diasTrabalhadosValor, 0);
+  const diasTrabalhadosValor = snapMesFechado ? (snapMesFechado.diasTrabalhados || 0) : diasComGanhos.size;
+  const diasRestantes = snapMesFechado ? 0 : Math.max(config.diasPlanejados - diasTrabalhadosValor, 0);
 
   const mediaDiaValor = diasTrabalhadosValor > 0 ? entradas / diasTrabalhadosValor : 0;
   const metaMinima = config.diasPlanejados > 0 ? custosSemParcela / config.diasPlanejados : 0;
@@ -719,6 +728,7 @@ function render() {
 
   renderizarMetasConfig();
   renderizarHistoricoMensal({ entradas, saidas, kmRodado, litrosTotal, gastoGasolina, lucroOperacional, custosSemParcela, metaConsistenteValor, custosTotais });
+  renderizarBannerMesFechado(snapMesFechado);
 }
 
 function entradasEl() { return document.getElementById("entradas"); }
@@ -820,9 +830,30 @@ async function fecharMesAtualManual() {
   resumo.fechadoEm = new Date().toISOString();
   fechamentos[mesAtual] = resumo;
   salvarBackupLocal();
-  renderizarHistoricoMensal();
+  render();
   setStatusSync("Mês fechado", "ok");
   await salvarEstado();
+}
+
+function renderizarBannerMesFechado(snap) {
+  ["telaInicio", "telaDashboard"].forEach(id => {
+    const tela = document.getElementById(id);
+    if (!tela) return;
+    let banner = tela.querySelector(".mes-fechado-banner");
+    if (!snap) {
+      if (banner) banner.remove();
+      return;
+    }
+    if (!banner) {
+      banner = document.createElement("div");
+      banner.className = "mes-fechado-banner";
+      tela.insertBefore(banner, tela.firstChild);
+    }
+    const dataFechamento = snap.fechadoEm
+      ? new Date(snap.fechadoEm).toLocaleDateString("pt-BR", { day: "2-digit", month: "long" })
+      : "";
+    banner.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg><span>Mês fechado${dataFechamento ? " em " + dataFechamento : ""}. Os números refletem o fechamento — novos lançamentos não alteram os totais.</span>`;
+  });
 }
 
 
@@ -1005,6 +1036,18 @@ function renderizarHistoricoMensal(ctx = {}) {
 
     const rotulosHistorico = rotulosVeiculo(resumo.config || config);
 
+    const mediaDiaCard = (resumo.diasTrabalhados || 0) > 0 ? resumo.entradas / resumo.diasTrabalhados : 0;
+    const receitaPorKmCard = (resumo.kmRodado || 0) > 0 ? resumo.entradas / resumo.kmRodado : 0;
+    const custoPorKmCard = (resumo.kmRodado || 0) > 0 ? (resumo.gastoGasolina || 0) / resumo.kmRodado : 0;
+    const atingiuSobrevivencia = metaMinima > 0 && resumo.entradas >= metaMinima;
+    const atingiuEstabilidade = metaConsistente > 0 && resumo.entradas >= metaConsistente;
+    const atingiuConforto = metaIdeal > 0 && resumo.entradas >= metaIdeal;
+    const metaTagsHtml = [
+      metaMinima > 0 ? '<span class="month-meta-tag ' + (atingiuSobrevivencia ? 'ok' : 'miss') + '">Sobrevivência · ' + moeda(metaMinima) + '</span>' : '',
+      metaConsistente > 0 ? '<span class="month-meta-tag ' + (atingiuEstabilidade ? 'ok' : 'miss') + '">Estabilidade · ' + moeda(metaConsistente) + '</span>' : '',
+      metaIdeal > 0 ? '<span class="month-meta-tag ' + (atingiuConforto ? 'ok' : 'miss') + '">Conforto · ' + moeda(metaIdeal) + '</span>' : ''
+    ].join('');
+
     const card = document.createElement("div");
     card.className = `month-card-premium ${statusClasse} ${metaClasse}`;
     card.innerHTML = `
@@ -1035,12 +1078,16 @@ function renderizarHistoricoMensal(ctx = {}) {
             </div>
             <div class="month-progress-track"><div class="month-progress-fill" style="width:${progresso}%"></div></div>
           </div>
+          ${metaTagsHtml ? `<div class="month-metas-row">${metaTagsHtml}</div>` : ""}
         </div>
 
         <div class="month-kpi-grid">
           <div class="month-kpi"><span>Entradas</span><strong class="positivo">${moeda(resumo.entradas)}</strong><small>Ganhos Uber</small></div>
           <div class="month-kpi"><span>Saídas</span><strong class="negativo">${moedaSaida(saidasAbs)}</strong><small>Custos lançados</small></div>
+          <div class="month-kpi"><span>Média por dia</span><strong>${moeda(mediaDiaCard)}</strong><small>${resumo.diasTrabalhados || 0} dia(s) trabalhado(s)</small></div>
           <div class="month-kpi"><span>KM rodado</span><strong>${Math.round(resumo.kmRodado || 0).toLocaleString("pt-BR")}</strong><small>${numero(resumo.litrosTotal || 0)} ${rotulosHistorico.resumoQuantidadeHistorico}</small></div>
+          <div class="month-kpi"><span>Receita/KM</span><strong>${moeda(receitaPorKmCard)}</strong><small>Ganho por quilômetro</small></div>
+          <div class="month-kpi"><span>Custo/KM</span><strong>${moedaSaida(custoPorKmCard)}</strong><small>Energia por quilômetro</small></div>
           <div class="month-kpi"><span>Lucro/KM</span><strong>${moeda(resumo.lucroPorKm)}</strong><small>Resultado operacional por km</small></div>
         </div>
       </div>
