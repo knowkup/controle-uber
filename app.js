@@ -832,20 +832,8 @@ function renderizarBannerMesFechado(snap) {
   ["telaInicio", "telaDashboard"].forEach(id => {
     const tela = document.getElementById(id);
     if (!tela) return;
-    let banner = tela.querySelector(".mes-fechado-banner");
-    if (!snap) {
-      if (banner) banner.remove();
-      return;
-    }
-    if (!banner) {
-      banner = document.createElement("div");
-      banner.className = "mes-fechado-banner";
-      tela.insertBefore(banner, tela.firstChild);
-    }
-    const dataFechamento = snap.fechadoEm
-      ? new Date(snap.fechadoEm).toLocaleDateString("pt-BR", { day: "2-digit", month: "long" })
-      : "";
-    banner.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg><span>Mês fechado${dataFechamento ? " em " + dataFechamento : ""}. Histórico salvo — pronto para o próximo ciclo.</span>`;
+    const banner = tela.querySelector(".mes-fechado-banner");
+    if (banner) banner.remove();
   });
 }
 
@@ -984,6 +972,13 @@ function executarManutencaoMensal(forcar = false) {
   return alterou;
 }
 
+function rotuloMetaAtingida(metaAtingida) {
+  if (metaAtingida === "Ideal") return "Conforto";
+  if (metaAtingida === "Consistente") return "Estabilidade";
+  if (metaAtingida === "Mínima") return "Sobrevivência";
+  return metaAtingida || "Sem meta";
+}
+
 function fraseResultadoMes(entradas, sobrevivencia, estabilidade, conforto) {
   if (conforto > 0 && entradas >= conforto) return "Mandou muito bem! O mês chegou no conforto.";
   if (estabilidade > 0 && entradas >= estabilidade) return "Boa, o mês ficou firme na estabilidade.";
@@ -997,12 +992,15 @@ function buildReguaHistorico(entradas, sobrevivencia, estabilidade, conforto) {
   const markSobrev = sobrevivencia > 0 ? '<span class="ritmo-mark sobrevivencia" style="left:' + pos(sobrevivencia) + '%"></span>' : '';
   const markEstab = estabilidade > 0 ? '<span class="ritmo-mark estabilidade" style="left:' + pos(estabilidade) + '%"></span>' : '';
   const markConfort = conforto > 0 ? '<span class="ritmo-mark conforto" style="left:' + pos(conforto) + '%"></span>' : '';
+  const legSobrev = sobrevivencia > 0 ? '<span style="left:' + pos(sobrevivencia) + '%">Sobrevivência</span>' : '';
+  const legEstab = estabilidade > 0 ? '<span style="left:' + pos(estabilidade) + '%">Estabilidade</span>' : '';
+  const legConfort = conforto > 0 ? '<span style="left:' + pos(conforto) + '%">Conforto</span>' : '';
   return '<div class="ritmo-meter hist-regua"><div class="ritmo-regua"><div class="ritmo-track">'
     + '<span class="ritmo-mark zero" style="left:0%"></span>'
     + markSobrev + markEstab + markConfort
     + '<span class="ritmo-projecao hist-resultado" style="left:' + pos(entradas) + '%"><small>Resultado</small></span>'
     + '</div></div></div>'
-    + '<div class="ritmo-legenda"><span>0</span><span>Sobrevivência</span><span>Estabilidade</span><span>Conforto</span></div>';
+    + '<div class="ritmo-legenda"><span style="left:0%">0</span>' + legSobrev + legEstab + legConfort + '</div>';
 }
 
 function buildMetaCardsHistorico(entradas, sobrevivencia, estabilidade, conforto) {
@@ -1090,7 +1088,7 @@ function renderizarHistoricoMensal(ctx = {}) {
     const progresso = numeroPercentualSeguro(((resumo.entradas || 0) / metaReferencia) * 100);
     const diasTexto = (resumo.diasTrabalhados || 0) === 1 ? "1 dia trabalhado" : `${resumo.diasTrabalhados || 0} dias trabalhados`;
     const saidasAbs = Math.abs(Number(resumo.saidas) || 0);
-    const statusLabel = resumo.metaAtingida || "Sem meta";
+    const statusLabel = rotuloMetaAtingida(resumo.metaAtingida);
     const statusTexto = statusLabel === "Abaixo da mínima" ? "Abaixo da mínima" : `Faixa ${statusLabel.toLowerCase()}`;
 
     const rotulosHistorico = rotulosVeiculo(resumo.config || config);
