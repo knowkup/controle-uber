@@ -1732,6 +1732,63 @@ input[type="date"] {
 }
 .month-custo-valores small { color: var(--muted); font-weight: 480; }
 
+.btn-reabrir-mes {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 580;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  align-self: flex-start;
+  margin-top: 4px;
+}
+.btn-reabrir-mes:hover {
+  border-color: var(--orange);
+  color: var(--orange);
+  background: var(--orange-soft);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(18, 20, 23, 0.42);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+.modal-box {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+  padding: 28px 24px 22px;
+  max-width: 400px;
+  width: 100%;
+}
+.modal-titulo {
+  font-size: 17px;
+  font-weight: 740;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.modal-mensagem {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.55;
+  margin-bottom: 24px;
+}
+.modal-acoes {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.modal-acoes button { min-width: 88px; }
+
 
 @media (max-width: 800px) {
   body { padding: 12px; }

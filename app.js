@@ -822,15 +822,68 @@ async function excluirMeta(id) {
   await salvarEstado();
 }
 
+function mostrarModal(titulo, mensagem, labelConfirmar = "Confirmar", labelCancelar = "Cancelar") {
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    const cancelarHtml = labelCancelar
+      ? '<button type="button" class="modal-btn-cancelar secundario">' + textoSeguro(labelCancelar) + '</button>'
+      : '';
+    overlay.innerHTML = '<div class="modal-box">'
+      + '<div class="modal-titulo">' + textoSeguro(titulo) + '</div>'
+      + '<div class="modal-mensagem">' + textoSeguro(mensagem) + '</div>'
+      + '<div class="modal-acoes">' + cancelarHtml
+      + '<button type="button" class="modal-btn-confirmar">' + textoSeguro(labelConfirmar) + '</button>'
+      + '</div></div>';
+    document.body.appendChild(overlay);
+    const fechar = resultado => { overlay.remove(); resolve(resultado); };
+    overlay.querySelector(".modal-btn-confirmar").addEventListener("click", () => fechar(true));
+    if (labelCancelar) overlay.querySelector(".modal-btn-cancelar").addEventListener("click", () => fechar(false));
+    overlay.addEventListener("click", e => { if (e.target === overlay) fechar(false); });
+  });
+}
+
 async function fecharMesAtualManual() {
   const mesAtual = mesKeyDeData(new Date());
+  const confirmado = await mostrarModal(
+    "Fechar " + nomeMesAnoLongo(mesAtual) + "?",
+    "Os dados do mês serão congelados e o ciclo reiniciará. Para reabrir depois, não pode ter nenhum lançamento novo após o fechamento."
+  );
+  if (!confirmado) return;
+  const totalLancamentos = dados.filter(d => obterMesKey(d.data) === mesAtual).length;
   const resumo = calcularResumoDoMes(mesAtual, dados, config, "Fechado");
   resumo.fechadoManual = true;
   resumo.fechadoEm = new Date().toISOString();
+  resumo.totalLancamentos = totalLancamentos;
   fechamentos[mesAtual] = resumo;
   salvarBackupLocal();
   render();
   setStatusSync("Mês fechado", "ok");
+  await salvarEstado();
+}
+
+async function reabrirMes(mesKey) {
+  const snap = fechamentos[mesKey];
+  if (!snap) return;
+  const lancamentosAtuais = dados.filter(d => obterMesKey(d.data) === mesKey).length;
+  const lancamentosNoFechamento = snap.totalLancamentos ?? lancamentosAtuais;
+  if (lancamentosAtuais !== lancamentosNoFechamento) {
+    await mostrarModal(
+      "Não é possível reabrir",
+      "Há lançamentos feitos após o fechamento. Exclua-os na aba Lançamentos para poder reabrir o mês.",
+      "Entendi",
+      ""
+    );
+    return;
+  }
+  const confirmado = await mostrarModal(
+    "Reabrir " + nomeMesAnoLongo(mesKey) + "?",
+    "O mês voltará para aberto e os dados serão descongelados."
+  );
+  if (!confirmado) return;
+  delete fechamentos[mesKey];
+  render();
+  setStatusSync("Mês reaberto", "ok");
   await salvarEstado();
 }
 
@@ -1106,6 +1159,8 @@ function renderizarHistoricoMensal(ctx = {}) {
     const reguaHtml = buildReguaHistorico(resumo.entradas, metaMinima, metaConsistente, metaIdeal);
     const metaCardsHtml = buildMetaCardsHistorico(resumo.entradas, metaMinima, metaConsistente, metaIdeal);
     const composicaoHtml = buildComposicaoHistorico(resumo);
+    const podReabrir = mesKey === mesAtual && !!fechamentos[mesKey]?.fechadoManual;
+    const reabrirHtml = podReabrir ? '<button type="button" class="btn-reabrir-mes">Reabrir mês</button>' : '';
 
     const card = document.createElement("div");
     card.className = `month-card-premium ${statusClasse} ${metaClasse}`;
@@ -1143,8 +1198,12 @@ function renderizarHistoricoMensal(ctx = {}) {
           <div class="month-kpi"><span>Resultado</span><strong class="${resumo.resultado >= 0 ? "positivo" : "negativo"}">${moeda(resumo.resultado)}</strong><small>Ganhos − custos</small></div>
         </div>
         ${composicaoHtml}
+        ${reabrirHtml}
       </div>
     `;
+    if (podReabrir) {
+      card.querySelector(".btn-reabrir-mes").addEventListener("click", () => reabrirMes(mesKey));
+    }
     container.appendChild(card);
   });
 }
