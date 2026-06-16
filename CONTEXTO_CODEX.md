@@ -85,6 +85,7 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
 
 ## Mudancas recentes
 
+- Em 2026-06-16, decidido manter o projeto sem autenticacao; `firestore.rules` voltou a permitir leitura publica e escrita publica validada por formato/tamanho no documento `controleUber/estadoPrincipal`.
 - Em 2026-05-29, melhorado o card de historico mensal: adicionados KPIs Media por dia, Receita/KM e Custo/KM; grid de KPIs expandido de 2 para 4 colunas (mobile: 2); adicionadas tags de conquista de meta (Sobrevivencia/Estabilidade/Conforto) com cor verde para atingida e cinza para nao atingida.
 - Em 2026-05-29, implementado congelamento de dados apos fechamento manual do mes: `render()` passa a usar o snapshot salvo (`snapMesFechado`) para KPIs de Inicio e Dashboard; adicionada funcao `renderizarBannerMesFechado(snap)` que exibe banner verde informando o fechamento; `fecharMesAtualManual` passou a chamar `render()` em vez de apenas `renderizarHistoricoMensal`.
 - Em 2026-05-24, executados ajustes de produto: removido saldo inicial da UI e dos calculos de resultado, padronizados gastos executados com sinal negativo/vermelho, custos planejados em vermelho sem sinal negativo, icone de despesa trocado para recibo, regua/conforto migrados para cores sem vermelho como conquista, frases do status da Dashboard humanizadas e adicionado botao `Fechar mes atual` no Historico para salvar fechamento manual do mes corrente.
@@ -104,8 +105,8 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
 
 ## Pendencias importantes
 
-- As regras de `firestore.rules` ainda nao foram publicadas no Firebase. Executar `firebase login` e depois `firebase deploy --only firestore:rules --project controle-uber-9af6b`.
-- Sem publicar regras seguras, o banco pode continuar publicamente legivel/escrevivel dependendo das regras atuais do console.
+- Publicar `firestore.rules` no Firebase com `firebase deploy --only firestore:rules --project controle-uber-9af6b` para restaurar o acesso sem autenticacao.
+- Sem publicar as regras atuais, o banco pode continuar bloqueando o app em producao com `PERMISSION_DENIED`.
 - Os usos de `alert()` e `confirm()` no codigo sao legado e devem ser migrados para componentes proprios (modal/toast) gradualmente.
 
 ## Comandos uteis

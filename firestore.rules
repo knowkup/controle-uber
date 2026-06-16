@@ -3,18 +3,13 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /controleUber/estadoPrincipal {
-      allow read: if usuarioAutorizado();
-      allow write: if usuarioAutorizado() && estadoValido(request.resource.data);
+      allow read: if true;
+      allow write: if estadoValido(request.resource.data);
     }
 
     match /{document=**} {
       allow read, write: if false;
     }
-  }
-
-  function usuarioAutorizado() {
-    return request.auth != null
-      && request.auth.uid in ['vGKk21sl83bn4jEV3xltI4vD8ha2'];
   }
 
   function estadoValido(data) {
