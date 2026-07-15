@@ -1,4 +1,20 @@
 {
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      ".firebaserc",
+      ".git/**",
+      ".firebase/**",
+      "backups/**",
+      "firestore.rules",
+      "controle-uber.json",
+      "PLANO_MIGRACAO.md",
+      "CONTEXTO_CODEX.md",
+      "mockup/**",
+      ".claude/**"
+    ]
+  },
   "firestore": {
     "rules": "firestore.rules"
   }

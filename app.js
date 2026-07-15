@@ -73,7 +73,10 @@ document.getElementById("btnImportar").addEventListener("click", () => document.
 document.getElementById("btnLimpar").addEventListener("click", limparDados);
 ["valor", "metaValor", "retiradaDesejada"].forEach(id => {
   const campo = document.getElementById(id);
-  if (campo) campo.addEventListener("blur", event => formatarCampoMoeda(event.target));
+  if (campo) {
+    campo.addEventListener("input", event => formatarCampoMoedaDigitando(event.target));
+    campo.addEventListener("blur", event => formatarCampoMoeda(event.target));
+  }
 });
 
 function trocarAba(aba) {
@@ -206,6 +209,7 @@ async function adicionar() {
   });
 
   limparFormulario();
+  document.body.classList.remove("lancamento-aberto");
   executarManutencaoMensal(false);
   render();
   await salvarEstado();
@@ -1646,6 +1650,16 @@ function parseDecimalBR(valor) {
 function formatarCampoMoeda(campo) {
   const valor = parseMoeda(campo.value);
   campo.value = valor ? moeda(valor) : "";
+}
+
+function formatarCampoMoedaDigitando(campo) {
+  const digitos = String(campo.value || "").replace(/\D/g, "");
+  if (!digitos) {
+    campo.value = "";
+    return;
+  }
+  const centavos = Number.parseInt(digitos, 10);
+  campo.value = moeda(centavos / 100);
 }
 
 function formatarData(dataISO) {
