@@ -422,6 +422,118 @@ button.perigo {
   align-items: end;
 }
 
+.config-helper,
+.grid-config-retirada small,
+#blocoDiasManual small {
+  display: block;
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.config-helper { margin: -2px 0 14px; }
+
+.config-section {
+  margin: 4px 0 18px;
+  padding: 14px;
+  border: 1px solid #dce6dc;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fbfdfb, #f5faf6);
+}
+
+.config-section-head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.config-section h4 { margin: 0; color: var(--text); font-size: 15px; }
+.config-section-head p { margin: 4px 0 0; color: var(--muted); font-size: 12px; line-height: 1.4; }
+.config-section-head strong { color: var(--green); font-size: 12px; white-space: nowrap; }
+
+.rotina-semana {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  margin: 14px 0 10px;
+}
+
+.rotina-semana button {
+  margin: 0;
+  padding: 9px 3px;
+  border: 1px solid #d8e2d8;
+  border-radius: 9px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.rotina-semana button.ativo { background: var(--green); border-color: var(--green); color: #fff; }
+
+.toggle-linha {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.toggle-linha input { width: auto; margin: 0; accent-color: var(--green); }
+#blocoDiasManual { margin-top: 10px; }
+
+.calendario-rotina { margin-top: 14px; padding-top: 12px; border-top: 1px solid #e1e9e1; }
+.calendario-rotina-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+.calendario-rotina-head strong { color: var(--text); font-size: 13px; }
+.btn-cal-nav { width: 30px; height: 30px; margin: 0; padding: 0; border-radius: 8px; background: #fff; color: var(--text); font-size: 21px; line-height: 1; }
+.calendario-semana-labels,
+.calendario-rotina-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.calendario-semana-labels { margin-bottom: 4px; }
+.calendario-semana-labels span { text-align: center; color: var(--muted); font-size: 9px; font-weight: 700; }
+.calendario-dia { min-height: 43px; margin: 0; padding: 4px 2px; border: 1px solid #e2e8e2; border-radius: 8px; background: #fff; color: var(--text); }
+.calendario-dia strong, .calendario-dia small { display: block; }
+.calendario-dia strong { font-size: 12px; }
+.calendario-dia small { margin-top: 2px; color: var(--muted); font-size: 8px; font-weight: 650; }
+.calendario-dia.trabalho { background: #eef9f1; border-color: #bfe1c7; color: #146c37; }
+.calendario-dia.trabalho small { color: #2d7d49; }
+.calendario-dia.feriado { background: #fff7e9; border-color: #f0d3a3; }
+.calendario-dia.excecao { box-shadow: inset 0 0 0 1px var(--blue); }
+.calendario-dia.vazio { visibility: hidden; }
+.calendario-dia.desabilitado { opacity: .58; cursor: default; }
+.calendario-ajuda { margin: 9px 0 0; color: var(--muted); font-size: 11px; line-height: 1.4; }
+
+.month-review-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+  padding: 14px 16px;
+  border: 1px solid #b8dbbf;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #eff9f1, #e1f2e5);
+}
+.month-review-banner strong, .month-review-banner span { display: block; }
+.month-review-banner strong { color: #146c37; font-size: 14px; }
+.month-review-banner span { margin-top: 3px; color: #3d6548; font-size: 12px; }
+.month-review-banner button { width: auto; margin: 0; padding: 10px 13px; white-space: nowrap; }
+
+.semana-melhor-dia {
+  margin-top: 11px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(31, 79, 118, 0.14);
+}
+.semana-melhor-dia span,
+.semana-melhor-dia strong,
+.semana-melhor-dia small { display: block; }
+.semana-melhor-dia span { color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; }
+.semana-melhor-dia strong { margin-top: 2px; color: var(--green); font-size: 17px; }
+.semana-melhor-dia small { margin-top: 1px; color: var(--muted); font-size: 10px; }
+
 .meta-form-action {
   display: flex;
   align-items: end;
@@ -1807,6 +1919,13 @@ input[type="date"] {
 
 
 @media (max-width: 640px) {
+  .config-section-head,
+  .month-review-banner { flex-direction: column; align-items: stretch; }
+
+  .config-section-head strong { white-space: normal; }
+
+  .month-review-banner button { width: 100%; }
+
   .meta-config-row {
     grid-template-columns: 1fr;
     align-items: stretch;

@@ -149,6 +149,14 @@
 
 <div id="telaDashboard" class="tela hidden">
 
+<div class="month-review-banner hidden" id="dashboardRevisaoMes">
+  <div>
+    <strong>Novo mês, novo plano</strong>
+    <span>Revise sua rotina, seus custos e a retirada que quer garantir.</span>
+  </div>
+  <button type="button" id="btnRevisarMes">Revisar agora</button>
+</div>
+
 <div class="card dashboard-hero">
   <div class="dashboard-label">Projeção do mês</div>
   <div class="dashboard-valor-principal" id="dashboardProjecao">R$ 0,00</div>
@@ -247,6 +255,11 @@
         <span id="dashSemanaLabel">Ritmo da semana</span>
         <strong id="dashSemanaStatus">0%</strong>
         <p id="dashSemanaFalta">Aguardando meta consistente</p>
+        <div class="semana-melhor-dia">
+          <span>Melhor dia</span>
+          <strong id="dashMelhorDiaValor">—</strong>
+          <small id="dashMelhorDiaLabel">Registre ganhos nesta semana</small>
+        </div>
       </div>
     </div>
   </div>
@@ -323,8 +336,40 @@
 
   <input type="hidden" id="saldoInicial" value="0">
 
-  <label>Dias planejados</label>
-  <input type="text" id="diasPlanejados" inputmode="numeric" placeholder="Ex: 21">
+  <div class="config-section">
+    <div class="config-section-head">
+      <div>
+        <h4>Rotina de trabalho</h4>
+        <p>Escolha os dias em que costuma trabalhar. O calendário considera feriados nacionais e permite exceções.</p>
+      </div>
+      <strong id="rotinaDiasResumo">0 dias planejados</strong>
+    </div>
+    <div class="rotina-semana" id="rotinaSemana" aria-label="Dias habituais de trabalho">
+      <button type="button" data-weekday="1">Seg</button>
+      <button type="button" data-weekday="2">Ter</button>
+      <button type="button" data-weekday="3">Qua</button>
+      <button type="button" data-weekday="4">Qui</button>
+      <button type="button" data-weekday="5">Sex</button>
+      <button type="button" data-weekday="6">Sáb</button>
+      <button type="button" data-weekday="7">Dom</button>
+    </div>
+    <label class="toggle-linha"><input type="checkbox" id="trabalhoEmFeriados"> <span>Também trabalho nos feriados nacionais</span></label>
+    <div id="blocoDiasManual">
+      <label>Dias planejados (manual)</label>
+      <input type="text" id="diasPlanejados" inputmode="numeric" placeholder="Ex: 21">
+      <small>Escolha os dias da semana acima para deixar o calendário calcular este total.</small>
+    </div>
+    <div class="calendario-rotina">
+      <div class="calendario-rotina-head">
+        <button type="button" class="btn-cal-nav" id="btnCalendarioAnterior" aria-label="Mês anterior">‹</button>
+        <strong id="calendarioRotinaTitulo"></strong>
+        <button type="button" class="btn-cal-nav" id="btnCalendarioProximo" aria-label="Próximo mês">›</button>
+      </div>
+      <div class="calendario-semana-labels"><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span></div>
+      <div class="calendario-rotina-grid" id="calendarioRotina"></div>
+      <p class="calendario-ajuda">Toque em um dia para alternar entre trabalho e folga. Feriados ficam como folga, salvo quando você marcar uma exceção.</p>
+    </div>
+  </div>
 
   <label>Tipo de ve&iacute;culo</label>
   <select id="tipoVeiculo">
@@ -336,14 +381,12 @@
     <div>
       <label>Retirada desejada do m&ecirc;s</label>
       <input type="text" id="retiradaDesejada" inputmode="decimal" placeholder="R$ 0,00">
+      <small>O valor que você quer garantir para si depois de cobrir os custos.</small>
     </div>
     <div>
-      <label>Conta para</label>
-      <select id="retiradaObjetivo">
-        <option value="sobrevivencia">Sobreviv&ecirc;ncia</option>
-        <option value="estabilidade" selected>Estabilidade</option>
-        <option value="conforto">Conforto</option>
-      </select>
+      <label>Meta adicional de conforto</label>
+      <input type="text" id="confortoDesejado" inputmode="decimal" placeholder="R$ 0,00">
+      <small>O extra para chegar ao padrão de vida que você deseja.</small>
     </div>
   </div>
 
@@ -353,6 +396,7 @@
 <div class="card">
   <h3 class="heading-with-icon"><span class="heading-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"/></svg></span>Custos do mês</h3>
 
+  <p class="config-helper">Cadastre aqui os custos necessários para a operação. Eles formam a sua base de Sobrevivência.</p>
   <div class="grid-metas-config">
     <div>
       <label>Nome do custo</label>
@@ -362,15 +406,6 @@
     <div>
       <label>Valor</label>
       <input type="text" id="metaValor" inputmode="decimal" placeholder="R$ 0,00">
-    </div>
-
-    <div>
-      <label>Faixa</label>
-      <select id="metaObjetivo">
-        <option value="sobrevivencia">Sobrevivência</option>
-        <option value="estabilidade">Estabilidade</option>
-        <option value="conforto">Conforto</option>
-      </select>
     </div>
 
     <div class="meta-form-action">
@@ -400,7 +435,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="app.js?v=20260714-original-com-mascara"></script>
+<script src="app.js?v=20260727-rotina"></script>
 
 </div>
 </body>

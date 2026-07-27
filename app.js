@@ -25,6 +25,12 @@ let config = {
   tipoVeiculo: "combustao",
   retiradaDesejada: 0,
   retiradaObjetivo: "estabilidade",
+  confortoDesejado: 0,
+  diasSemana: [],
+  trabalhoEmFeriados: false,
+  diasFolgaExtra: [],
+  diasTrabalhoExtra: [],
+  modeloMetasVersao: 1,
   metas: []
 };
 
@@ -36,6 +42,7 @@ let firebaseCarregado = false;
 let salvandoFirebase = false;
 let bloqueiaRestauracaoLocal = false;
 let metaEmEdicaoId = null;
+let mesCalendarioRotina = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
 document.getElementById("importarArquivo").addEventListener("change", importarJSON);
 document.getElementById("data").addEventListener("change", atualizarDataPorExtenso);
@@ -61,11 +68,40 @@ if (document.getElementById("btnCancelarMeta")) {
 if (document.getElementById("btnFecharMes")) {
   btnFecharMes.addEventListener("click", fecharMesAtualManual);
 }
+if (document.getElementById("btnRevisarMes")) {
+  btnRevisarMes.addEventListener("click", () => {
+    trocarAba("config");
+    document.getElementById("telaConfig")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
 if (document.getElementById("tipoVeiculo")) {
   tipoVeiculo.addEventListener("change", () => {
     config.tipoVeiculo = tipoVeiculoSeguro(tipoVeiculo.value);
     render();
     selecionar(tipo);
+  });
+}
+if (document.getElementById("litros")) {
+  document.getElementById("litros").addEventListener("input", event => formatarCampoDecimalDireto(event.target));
+}
+if (document.getElementById("confortoDesejado")) {
+  document.getElementById("confortoDesejado").addEventListener("blur", event => formatarCampoMoeda(event.target));
+}
+document.querySelectorAll("[data-weekday]").forEach(botao => {
+  botao.addEventListener("click", () => alternarDiaSemana(Number(botao.dataset.weekday)));
+});
+if (document.getElementById("trabalhoEmFeriados")) {
+  document.getElementById("trabalhoEmFeriados").addEventListener("change", event => {
+    config.trabalhoEmFeriados = event.target.checked;
+    renderizarRotinaMensal();
+  });
+}
+if (document.getElementById("btnCalendarioAnterior")) {
+  document.getElementById("btnCalendarioAnterior").addEventListener("click", () => navegarCalendarioRotina(-1));
+  document.getElementById("btnCalendarioProximo").addEventListener("click", () => navegarCalendarioRotina(1));
+  document.getElementById("calendarioRotina").addEventListener("click", event => {
+    const botao = event.target.closest("[data-calendar-date]");
+    if (botao) alternarExcecaoRotina(botao.dataset.calendarDate);
   });
 }
 document.getElementById("btnExportar").addEventListener("click", exportarJSON);
@@ -217,10 +253,15 @@ async function adicionar() {
 
 async function salvarConfiguracoes() {
   config.saldoInicial = 0;
-  config.diasPlanejados = parseInt(diasPlanejados.value) || 0;
+  config.diasPlanejados = rotinaConfigurada()
+    ? calcularDiasPlanejadosDoMes(new Date().getFullYear(), new Date().getMonth() + 1, config)
+    : (parseInt(diasPlanejados.value) || 0);
   config.tipoVeiculo = tipoVeiculoSeguro(document.getElementById("tipoVeiculo")?.value);
   config.retiradaDesejada = parseMoeda(document.getElementById("retiradaDesejada")?.value);
-  config.retiradaObjetivo = objetivoMetaSeguro(document.getElementById("retiradaObjetivo")?.value || "estabilidade");
+  config.retiradaObjetivo = "estabilidade";
+  config.confortoDesejado = parseMoeda(document.getElementById("confortoDesejado")?.value);
+  config.modeloMetasVersao = 2;
+  config.revisaoMesPendente = "";
   migrarMetasConfiguradas();
 
   preencherCamposConfig();
@@ -231,7 +272,7 @@ async function salvarConfiguracoes() {
 async function cadastrarMeta() {
   const nome = limitarTexto(document.getElementById("metaNome").value, 60);
   const valor = parseMoeda(document.getElementById("metaValor").value);
-  const objetivo = objetivoMetaSeguro(document.getElementById("metaObjetivo").value);
+  const objetivo = "sobrevivencia";
   const tipoMeta = "custo";
 
   if (!nome) return alert("Informe o nome do custo.");
@@ -264,7 +305,6 @@ function resetarFormularioMeta() {
   metaEmEdicaoId = null;
   document.getElementById("metaNome").value = "";
   document.getElementById("metaValor").value = "";
-  document.getElementById("metaObjetivo").value = "sobrevivencia";
   if (document.getElementById("btnSalvarMeta")) btnSalvarMeta.innerText = "Cadastrar custo";
   if (document.getElementById("btnCancelarMeta")) btnCancelarMeta.classList.add("hidden");
 }
@@ -277,7 +317,6 @@ function iniciarEdicaoMeta(id) {
   metaEmEdicaoId = String(meta.id);
   document.getElementById("metaNome").value = meta.nome;
   document.getElementById("metaValor").value = moeda(meta.valor);
-  document.getElementById("metaObjetivo").value = objetivoMetaSeguro(meta.objetivo);
   if (document.getElementById("btnSalvarMeta")) btnSalvarMeta.innerText = "Salvar alterações";
   if (document.getElementById("btnCancelarMeta")) btnCancelarMeta.classList.remove("hidden");
 }
@@ -468,12 +507,13 @@ function atualizarOpcoesDescricaoDespesa() {
 }
 
 function normalizarMetasConfig() {
+  const modeloSimplificado = Number(config.modeloMetasVersao) >= 2;
   config.metas = (Array.isArray(config.metas) ? config.metas : [])
     .map(meta => ({
       id: meta.id ? String(meta.id) : gerarId(),
       nome: limitarTexto(meta.nome || meta.name, 60),
       valor: Number(meta.valor ?? meta.value) || 0,
-      objetivo: objetivoMetaSeguro(meta.objetivo || meta.categoria || meta.tipo),
+      objetivo: modeloSimplificado ? "sobrevivencia" : objetivoMetaSeguro(meta.objetivo || meta.categoria || meta.tipo),
       tipoMeta: tipoMetaSeguro(meta.tipoMeta || meta.comportamento || tipoMetaPorNome(meta.nome || meta.name))
     }))
     .filter(meta => meta.nome && meta.valor >= 0);
@@ -481,8 +521,13 @@ function normalizarMetasConfig() {
   const metaSobra = config.metas.find(ehMetaSobra);
   if (metaSobra) {
     if (!config.retiradaDesejada) config.retiradaDesejada = Number(metaSobra.valor) || 0;
-    config.retiradaObjetivo = objetivoMetaSeguro(config.retiradaObjetivo || metaSobra.objetivo || "estabilidade");
+    config.retiradaObjetivo = modeloSimplificado ? "estabilidade" : objetivoMetaSeguro(config.retiradaObjetivo || metaSobra.objetivo || "estabilidade");
     config.metas = config.metas.filter(meta => !ehMetaSobra(meta));
+  }
+
+  if (modeloSimplificado) {
+    config.retiradaObjetivo = "estabilidade";
+    config.metas = config.metas.map(meta => ({ ...meta, objetivo: "sobrevivencia", tipoMeta: "custo" }));
   }
 }
 
@@ -532,6 +577,13 @@ function totaisMetasConfig(configBase = config) {
     return { sobrevivencia: sobrevivenciaLegada, estabilidade: estabilidadeLegada, conforto: confortoLegado };
   }
 
+  if (Number(configBase.modeloMetasVersao) >= 2) {
+    const sobrevivencia = metas.reduce((soma, meta) => soma + (Number(meta.valor) || 0), 0);
+    const estabilidade = sobrevivencia + (Number(configBase.retiradaDesejada) || 0);
+    const conforto = estabilidade + (Number(configBase.confortoDesejado) || 0);
+    return { sobrevivencia, estabilidade, conforto };
+  }
+
   const totalSobrevivencia = metas
     .filter(meta => objetivoMetaSeguro(meta.objetivo) === "sobrevivencia")
     .reduce((soma, meta) => soma + (Number(meta.valor) || 0), 0);
@@ -565,6 +617,13 @@ function totaisCustosConfig(configBase = config) {
       estabilidade: 0,
       conforto: Number(configBase.metaParcela) || 0
     };
+  }
+
+  if (Number(configBase.modeloMetasVersao) >= 2) {
+    return metas.reduce((totais, meta) => {
+      totais.sobrevivencia += Number(meta.valor) || 0;
+      return totais;
+    }, { sobrevivencia: 0, estabilidade: 0, conforto: 0 });
   }
 
   return metas.reduce((totais, meta) => {
@@ -682,15 +741,16 @@ function render() {
   const metaConsistenteValor = totaisMetas.estabilidade;
   const custosTotais = totaisMetas.conforto;
 
+  const diasPlanejadosAtual = calcularDiasPlanejadosDoMes(new Date().getFullYear(), new Date().getMonth() + 1, config);
   const diasTrabalhadosValor = snapMesFechado ? 0 : diasComGanhos.size;
-  const diasRestantes = snapMesFechado ? 0 : Math.max(config.diasPlanejados - diasTrabalhadosValor, 0);
+  const diasRestantes = snapMesFechado ? 0 : Math.max(diasPlanejadosAtual - diasTrabalhadosValor, 0);
 
   const mediaDiaValor = diasTrabalhadosValor > 0 ? entradas / diasTrabalhadosValor : 0;
-  const metaMinima = config.diasPlanejados > 0 ? custosSemParcela / config.diasPlanejados : 0;
-  const metaIdeal = config.diasPlanejados > 0 ? custosTotais / config.diasPlanejados : 0;
+  const metaMinima = diasPlanejadosAtual > 0 ? custosSemParcela / diasPlanejadosAtual : 0;
+  const metaIdeal = diasPlanejadosAtual > 0 ? custosTotais / diasPlanejadosAtual : 0;
   const metaAjustadaValor = diasRestantes > 0 ? Math.max((custosSemParcela - entradas) / diasRestantes, 0) : 0;
 
-  if (document.getElementById("diasPlanejadosResumo")) diasPlanejadosResumo.innerText = config.diasPlanejados || 0;
+  if (document.getElementById("diasPlanejadosResumo")) diasPlanejadosResumo.innerText = diasPlanejadosAtual || 0;
   entradasEl().innerText = moeda(entradas);
   saidasEl().innerText = moeda(saidas);
   resultado.innerText = moeda(resultadoMes);
@@ -724,6 +784,7 @@ function render() {
     custosTotais,
     diasTrabalhadosValor,
     diasRestantes,
+    diasPlanejadosAtual,
     mediaDiaValor,
     metaAjustadaValor,
     snapMesFechado
@@ -732,6 +793,14 @@ function render() {
   renderizarMetasConfig();
   renderizarHistoricoMensal({ entradas, saidas, kmRodado, litrosTotal, gastoGasolina, lucroOperacional, custosSemParcela, metaConsistenteValor, custosTotais });
   renderizarBannerMesFechado(snapMesFechado);
+  renderizarBannerRevisaoMensal();
+}
+
+function renderizarBannerRevisaoMensal() {
+  const banner = document.getElementById("dashboardRevisaoMes");
+  if (!banner) return;
+  const mesAtual = mesKeyDeData(new Date());
+  banner.classList.toggle("hidden", config.revisaoMesPendente !== mesAtual);
 }
 
 function entradasEl() { return document.getElementById("entradas"); }
@@ -753,14 +822,14 @@ function renderizarComposicaoMetas(ctx) {
     return;
   }
 
-  const grupos = ["sobrevivencia", "estabilidade", "conforto"];
+  const grupos = Number(config.modeloMetasVersao) >= 2 ? ["sobrevivencia"] : ["sobrevivencia", "estabilidade", "conforto"];
   container.innerHTML = grupos.map(objetivo => {
     const metasDoGrupo = config.metas.filter(meta => objetivoMetaSeguro(meta.objetivo) === objetivo);
     if (!metasDoGrupo.length) return "";
 
     return `
       <section class="composicao-grupo composicao-${objetivo}">
-        <div class="composicao-grupo-titulo">${rotuloObjetivoMeta(objetivo)}</div>
+        <div class="composicao-grupo-titulo">${Number(config.modeloMetasVersao) >= 2 ? "Custos que compõem a Sobrevivência" : rotuloObjetivoMeta(objetivo)}</div>
         <div class="composicao-itens">
           ${metasDoGrupo.map(meta => {
             const valorMeta = Number(meta.valor) || 0;
@@ -799,7 +868,7 @@ function renderizarMetasConfig() {
     <div class="meta-config-row">
       <div>
         <strong>${textoSeguro(meta.nome)}</strong>
-        <small>${rotuloObjetivoMeta(meta.objetivo)}</small>
+        <small>${Number(config.modeloMetasVersao) >= 2 ? "Custo essencial" : rotuloObjetivoMeta(meta.objetivo)}</small>
       </div>
       <span class="custo-planejado">${moeda(meta.valor)}</span>
       <div class="meta-config-actions">
@@ -1011,12 +1080,14 @@ function executarManutencaoMensal(forcar = false) {
     // Todo mês anterior ao mês atual recebe/atualiza um consolidado.
     // Ele pode continuar aparecendo em Lançamentos por mais um mês.
     if (compararMesKey(mesKey, mesAtual) < 0) {
+      const tinhaFechamento = !!fechamentos[mesKey];
       const resumo = calcularResumoDoMes(mesKey, dados, config, "Fechado");
       const anterior = JSON.stringify(fechamentos[mesKey] || {});
       const novo = JSON.stringify(resumo);
       if (anterior !== novo) {
         fechamentos[mesKey] = resumo;
         alterou = true;
+        if (!tinhaFechamento) config.revisaoMesPendente = mesAtual;
       }
     }
   });
@@ -1252,7 +1323,7 @@ function metaProjetadaStatus(projecao, sobrevivencia, estabilidade, conforto) {
 }
 
 function proximaMetaAtiva(valor, sobrevivencia, estabilidade, conforto) {
-  if (sobrevivencia > 0 && valor < sobrevivencia) return { nome: "Sobrevivência", acao: "Para sobreviver", valor: sobrevivencia };
+  if (sobrevivencia > 0 && valor < sobrevivencia) return { nome: "Sobrevivência", acao: "Para cobrir os custos", valor: sobrevivencia };
   if (estabilidade > 0 && valor < estabilidade) return { nome: "Estabilidade", acao: "Para alcançar estabilidade", valor: estabilidade };
   if (conforto > 0 && valor < conforto) return { nome: "Conforto", acao: "Para alcançar conforto", valor: conforto };
   return null;
@@ -1286,6 +1357,25 @@ function metaIcone(nome) {
   return icons[nome] || icons.Minima;
 }
 
+function obterMelhorDiaSemanaAtual() {
+  const hoje = new Date();
+  const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - ((hoje.getDay() + 6) % 7));
+  const fim = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate() + 6);
+  const ganhosPorDia = {};
+
+  dados.forEach(item => {
+    if (item.descricao !== "Ganhos Uber" || Number(item.valor) <= 0 || !item.data) return;
+    const partes = item.data.split("-").map(Number);
+    if (partes.length !== 3 || partes.some(Number.isNaN)) return;
+    const data = new Date(partes[0], partes[1] - 1, partes[2]);
+    if (data < inicio || data > fim) return;
+    ganhosPorDia[item.data] = (ganhosPorDia[item.data] || 0) + Number(item.valor);
+  });
+
+  const melhor = Object.entries(ganhosPorDia).sort((a, b) => b[1] - a[1])[0];
+  return melhor ? { data: melhor[0], valor: melhor[1] } : null;
+}
+
 function atualizarDashboard(ctx) {
   if (!document.getElementById("dashboardProjecao")) return;
 
@@ -1295,12 +1385,13 @@ function atualizarDashboard(ctx) {
   const custosTotais = ctx.custosTotais || 0;
   const diasTrabalhadosValor = ctx.diasTrabalhadosValor || 0;
   const diasRestantes = ctx.diasRestantes || 0;
+  const diasPlanejadosAtual = ctx.diasPlanejadosAtual || 0;
   const mediaDiaValor = ctx.mediaDiaValor || 0;
 
   const metaConsistenteValor = totaisMetasConfig().estabilidade;
   const custosBaseSobra = totaisCustosConfig().sobrevivencia;
 
-  const projecaoMes = mediaDiaValor * (Number(config.diasPlanejados) || 0);
+  const projecaoMes = mediaDiaValor * diasPlanejadosAtual;
   const custosAtuais = Math.abs(saidas);
   const baseRetiradaPrevista = Math.max(custosBaseSobra, custosAtuais);
   const sobraProjetada = projecaoMes - baseRetiradaPrevista;
@@ -1370,14 +1461,18 @@ function atualizarDashboard(ctx) {
 
   if (document.getElementById("dashSemanaExecutadoValor")) dashSemanaExecutadoValor.innerText = moeda(ganhoSemanaAtual);
   if (document.getElementById("dashMetaSemana")) dashMetaSemana.innerText = `Meta semanal: ${moeda(metaSemanal)}`;
-  dashSemanaStatus.innerText = `${Math.round(percSemana)}%`;
-  if (document.getElementById("dashSemanaLabel")) dashSemanaLabel.innerText = "Progresso";
-
-  if (metaSemanal > 0) {
+  if (document.getElementById("dashSemanaStatus")) dashSemanaStatus.innerText = `${Math.round(percSemana)}%`;
+  if (document.getElementById("dashSemanaLabel")) dashSemanaLabel.innerText = "Ritmo da semana";
+  if (document.getElementById("dashSemanaFalta")) {
     const faltaSemana = Math.max(metaSemanal - ganhoSemanaAtual, 0);
-    dashSemanaFalta.innerText = faltaSemana > 0 ? `Faltam ${moeda(faltaSemana)} nesta semana` : "Meta semanal atingida";
-  } else {
-    dashSemanaFalta.innerText = "Configure as metas";
+    dashSemanaFalta.innerText = metaSemanal > 0
+      ? (faltaSemana > 0 ? `Faltam ${moeda(faltaSemana)} nesta semana` : "Meta semanal atingida")
+      : "Configure as metas";
+  }
+  const melhorDia = obterMelhorDiaSemanaAtual();
+  if (document.getElementById("dashMelhorDiaValor")) dashMelhorDiaValor.innerText = melhorDia ? moeda(melhorDia.valor) : "—";
+  if (document.getElementById("dashMelhorDiaLabel")) {
+    dashMelhorDiaLabel.innerText = melhorDia ? `${formatarData(melhorDia.data)} · seu melhor resultado` : "Registre ganhos nesta semana";
   }
 
   const metaSemanalSemanasDoMes = metaConsistenteValor > 0 ? metaConsistenteValor / Math.max(semanas.length, 1) : 0;
@@ -1585,7 +1680,15 @@ function normalizarConfigAtual() {
   config.metaConsistente = Number(config.metaConsistente) || 0;
   config.tipoVeiculo = tipoVeiculoSeguro(config.tipoVeiculo);
   config.retiradaDesejada = Number(config.retiradaDesejada) || 0;
-  config.retiradaObjetivo = objetivoMetaSeguro(config.retiradaObjetivo || "estabilidade");
+  config.retiradaObjetivo = "estabilidade";
+  config.confortoDesejado = Number(config.confortoDesejado) || 0;
+  config.diasSemana = [...new Set((Array.isArray(config.diasSemana) ? config.diasSemana : [])
+    .map(Number)
+    .filter(dia => dia >= 1 && dia <= 7))].sort((a, b) => a - b);
+  config.trabalhoEmFeriados = !!config.trabalhoEmFeriados;
+  config.diasFolgaExtra = (Array.isArray(config.diasFolgaExtra) ? config.diasFolgaExtra : []).map(normalizarDataISO).filter(Boolean);
+  config.diasTrabalhoExtra = (Array.isArray(config.diasTrabalhoExtra) ? config.diasTrabalhoExtra : []).map(normalizarDataISO).filter(Boolean);
+  config.modeloMetasVersao = Number(config.modeloMetasVersao) || 1;
   migrarMetasConfiguradas();
 }
 
@@ -1647,6 +1750,18 @@ function parseDecimalBR(valor) {
   return parseFloat(texto) || 0;
 }
 
+function formatarCampoDecimalDireto(campo) {
+  const digitos = String(campo.value || "").replace(/\D/g, "").replace(/^0+(?=\d)/, "");
+  if (!digitos) {
+    campo.value = "";
+    return;
+  }
+  campo.value = (Number(digitos) / 100).toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
 function formatarCampoMoeda(campo) {
   const valor = parseMoeda(campo.value);
   campo.value = valor ? moeda(valor) : "";
@@ -1660,6 +1775,155 @@ function formatarCampoMoedaDigitando(campo) {
   }
   const centavos = Number.parseInt(digitos, 10);
   campo.value = moeda(centavos / 100);
+}
+
+function rotinaConfigurada(configBase = config) {
+  return Array.isArray(configBase.diasSemana) && configBase.diasSemana.length > 0;
+}
+
+function dataISOCalendario(ano, mes, dia) {
+  return `${ano}-${String(mes).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+}
+
+function adicionarDias(data, dias) {
+  const copia = new Date(data.getFullYear(), data.getMonth(), data.getDate());
+  copia.setDate(copia.getDate() + dias);
+  return copia;
+}
+
+function calcularPascoa(ano) {
+  const a = ano % 19;
+  const b = Math.floor(ano / 100);
+  const c = ano % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const mes = Math.floor((h + l - 7 * m + 114) / 31);
+  const dia = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(ano, mes - 1, dia);
+}
+
+function feriadosNacionais(ano) {
+  const fixos = ["01-01", "04-21", "05-01", "09-07", "10-12", "11-02", "11-15", "11-20", "12-25"];
+  const sextaSanta = adicionarDias(calcularPascoa(ano), -2);
+  return new Set([
+    ...fixos.map(data => `${ano}-${data}`),
+    dataISOCalendario(sextaSanta.getFullYear(), sextaSanta.getMonth() + 1, sextaSanta.getDate())
+  ]);
+}
+
+function diaEhTrabalho(data, configBase = config) {
+  if (!rotinaConfigurada(configBase)) return false;
+  const dataISO = dataISOCalendario(data.getFullYear(), data.getMonth() + 1, data.getDate());
+  const feriado = feriadosNacionais(data.getFullYear()).has(dataISO);
+  let trabalha = configBase.diasSemana.includes(data.getDay() || 7);
+  if (feriado && !configBase.trabalhoEmFeriados) trabalha = false;
+  if (configBase.diasFolgaExtra.includes(dataISO)) trabalha = false;
+  if (configBase.diasTrabalhoExtra.includes(dataISO)) trabalha = true;
+  return trabalha;
+}
+
+function diaEhTrabalhoBase(data, configBase = config) {
+  if (!rotinaConfigurada(configBase)) return false;
+  const dataISO = dataISOCalendario(data.getFullYear(), data.getMonth() + 1, data.getDate());
+  return configBase.diasSemana.includes(data.getDay() || 7)
+    && (!feriadosNacionais(data.getFullYear()).has(dataISO) || configBase.trabalhoEmFeriados);
+}
+
+function calcularDiasPlanejadosDoMes(ano, mes, configBase = config) {
+  if (!rotinaConfigurada(configBase)) return Number(configBase.diasPlanejados) || 0;
+  const ultimoDia = new Date(ano, mes, 0).getDate();
+  let total = 0;
+  for (let dia = 1; dia <= ultimoDia; dia++) {
+    if (diaEhTrabalho(new Date(ano, mes - 1, dia), configBase)) total++;
+  }
+  return total;
+}
+
+function atualizarDiasPlanejadosDaRotina() {
+  if (!rotinaConfigurada()) return;
+  config.diasPlanejados = calcularDiasPlanejadosDoMes(new Date().getFullYear(), new Date().getMonth() + 1, config);
+}
+
+function alternarDiaSemana(dia) {
+  const dias = new Set(Array.isArray(config.diasSemana) ? config.diasSemana : []);
+  if (dias.has(dia)) dias.delete(dia);
+  else dias.add(dia);
+  config.diasSemana = [...dias].sort((a, b) => a - b);
+  atualizarDiasPlanejadosDaRotina();
+  renderizarRotinaMensal();
+  render();
+}
+
+function navegarCalendarioRotina(delta) {
+  mesCalendarioRotina = new Date(mesCalendarioRotina.getFullYear(), mesCalendarioRotina.getMonth() + delta, 1);
+  renderizarRotinaMensal();
+}
+
+function alternarExcecaoRotina(dataISO) {
+  if (!rotinaConfigurada() || !/^\d{4}-\d{2}-\d{2}$/.test(dataISO)) return;
+  const [ano, mes, dia] = dataISO.split("-").map(Number);
+  const data = new Date(ano, mes - 1, dia);
+  const trabalhaAgora = diaEhTrabalho(data);
+  const trabalhaBase = diaEhTrabalhoBase(data);
+  const deveTrabalhar = !trabalhaAgora;
+  config.diasFolgaExtra = config.diasFolgaExtra.filter(item => item !== dataISO);
+  config.diasTrabalhoExtra = config.diasTrabalhoExtra.filter(item => item !== dataISO);
+  if (deveTrabalhar !== trabalhaBase) {
+    if (deveTrabalhar) config.diasTrabalhoExtra.push(dataISO);
+    else config.diasFolgaExtra.push(dataISO);
+  }
+  atualizarDiasPlanejadosDaRotina();
+  renderizarRotinaMensal();
+  render();
+}
+
+function renderizarRotinaMensal() {
+  const titulo = document.getElementById("calendarioRotinaTitulo");
+  const grade = document.getElementById("calendarioRotina");
+  const resumo = document.getElementById("rotinaDiasResumo");
+  const blocoManual = document.getElementById("blocoDiasManual");
+  if (!titulo || !grade || !resumo || !blocoManual) return;
+
+  const ano = mesCalendarioRotina.getFullYear();
+  const mes = mesCalendarioRotina.getMonth() + 1;
+  const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+  const total = calcularDiasPlanejadosDoMes(ano, mes, config);
+  const rotinaAtiva = rotinaConfigurada();
+  titulo.innerText = `${meses[mes - 1]} de ${ano}`;
+  resumo.innerText = rotinaAtiva ? `${total} dias planejados` : `${Number(config.diasPlanejados) || 0} dias planejados`;
+  blocoManual.classList.toggle("hidden", rotinaAtiva);
+
+  document.querySelectorAll("[data-weekday]").forEach(botao => {
+    botao.classList.toggle("ativo", config.diasSemana.includes(Number(botao.dataset.weekday)));
+  });
+
+  const primeiroDia = new Date(ano, mes - 1, 1);
+  const deslocamento = (primeiroDia.getDay() + 6) % 7;
+  const ultimoDia = new Date(ano, mes, 0).getDate();
+  const feriados = feriadosNacionais(ano);
+  const vazios = Array.from({ length: deslocamento }, () => '<span class="calendario-dia vazio"></span>');
+  const dias = Array.from({ length: ultimoDia }, (_, indice) => {
+    const dia = indice + 1;
+    const data = new Date(ano, mes - 1, dia);
+    const dataISO = dataISOCalendario(ano, mes, dia);
+    const feriado = feriados.has(dataISO);
+    const excecao = config.diasFolgaExtra.includes(dataISO) || config.diasTrabalhoExtra.includes(dataISO);
+    const trabalha = diaEhTrabalho(data);
+    const classes = ["calendario-dia", trabalha ? "trabalho" : "folga"];
+    if (feriado) classes.push("feriado");
+    if (excecao) classes.push("excecao");
+    if (!rotinaAtiva) classes.push("desabilitado");
+    const estado = trabalha ? "Trabalho" : (feriado ? "Feriado" : "Folga");
+    return `<button type="button" class="${classes.join(" ")}" data-calendar-date="${dataISO}" ${rotinaAtiva ? "" : "disabled"} aria-label="${dia} de ${meses[mes - 1]}: ${estado}"><strong>${dia}</strong><small>${excecao ? "Exceção" : estado}</small></button>`;
+  });
+  grade.innerHTML = [...vazios, ...dias].join("");
 }
 
 function formatarData(dataISO) {
@@ -1698,7 +1962,9 @@ function preencherCamposConfig() {
   diasPlanejados.value = config.diasPlanejados || "";
   if (document.getElementById("tipoVeiculo")) tipoVeiculo.value = tipoVeiculoSeguro(config.tipoVeiculo);
   if (document.getElementById("retiradaDesejada")) retiradaDesejada.value = config.retiradaDesejada ? moeda(config.retiradaDesejada) : "";
-  if (document.getElementById("retiradaObjetivo")) retiradaObjetivo.value = objetivoMetaSeguro(config.retiradaObjetivo || "estabilidade");
+  if (document.getElementById("confortoDesejado")) confortoDesejado.value = config.confortoDesejado ? moeda(config.confortoDesejado) : "";
+  if (document.getElementById("trabalhoEmFeriados")) trabalhoEmFeriados.checked = !!config.trabalhoEmFeriados;
+  renderizarRotinaMensal();
   atualizarRotulosVeiculo();
   renderizarMetasConfig();
 }
@@ -1907,6 +2173,13 @@ async function limparDados() {
     tipoVeiculo: "combustao",
     retiradaDesejada: 0,
     retiradaObjetivo: "estabilidade",
+    confortoDesejado: 0,
+    diasSemana: [],
+    trabalhoEmFeriados: false,
+    diasFolgaExtra: [],
+    diasTrabalhoExtra: [],
+    modeloMetasVersao: 2,
+    revisaoMesPendente: "",
     metas: []
   };
   fechamentos = {};
