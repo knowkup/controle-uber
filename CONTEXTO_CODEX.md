@@ -85,6 +85,7 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
 
 ## Mudancas recentes
 
+- Em 2026-07-27, reorganizada a Configuracao para deixar o cadastro de metas explicito: custos cadastrados formam Sobrevivencia, retirada desejada forma Estabilidade e o adicional separado forma Conforto, com os tres totais atualizados em tempo real.
 - Em 2026-07-27, adicionados calendario de rotina com dias semanais, feriados nacionais e excecoes de trabalho/folga; a rotina so substitui o numero manual de dias apos ser configurada. Adicionada revisao de virada de mes no Dashboard, melhor dia da semana, mascara automatica de duas casas para litros e simplificado o modelo de metas: custos formam Sobrevivencia, retirada compoe Estabilidade e Conforto e um adicional explicito.
 - Em 2026-06-16, decidido manter o projeto sem autenticacao; `firestore.rules` voltou a permitir leitura publica e escrita publica validada por formato/tamanho no documento `controleUber/estadoPrincipal`.
 - Em 2026-05-29, melhorado o card de historico mensal: adicionados KPIs Media por dia, Receita/KM e Custo/KM; grid de KPIs expandido de 2 para 4 colunas (mobile: 2); adicionadas tags de conquista de meta (Sobrevivencia/Estabilidade/Conforto) com cor verde para atingida e cinza para nao atingida.

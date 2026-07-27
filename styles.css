@@ -434,6 +434,50 @@ button.perigo {
 
 .config-helper { margin: -2px 0 14px; }
 
+.metas-financeiras-card { overflow: hidden; }
+
+.faixa-config {
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid var(--meta-border, #dce5dc);
+  border-radius: 14px;
+  background: var(--meta-soft, #f8fbf8);
+}
+
+.faixa-sobrevivencia { --meta-border: #c9ead2; --meta-soft: #f0f9f2; --meta-color: #159447; }
+.faixa-estabilidade { --meta-border: #f4d7aa; --meta-soft: #fff7eb; --meta-color: #b66600; }
+.faixa-conforto { --meta-border: #c9ddf2; --meta-soft: #f0f7ff; --meta-color: #2f74b5; }
+
+.faixa-config-head { display: flex; gap: 10px; align-items: flex-start; }
+.faixa-config-head > span {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--meta-color);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+}
+.faixa-config h4 { margin: 1px 0 0; color: var(--meta-color); font-size: 15px; }
+.faixa-config p { margin: 3px 0 0; color: var(--muted); font-size: 12px; line-height: 1.4; }
+.faixa-config label { margin-top: 13px; color: var(--text); font-size: 12px; font-weight: 700; }
+.faixa-config input { margin-top: 6px; background: rgba(255, 255, 255, .9); }
+
+.faixa-config-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 13px;
+  padding-top: 11px;
+  border-top: 1px solid var(--meta-border);
+}
+.faixa-config-total span { color: var(--muted); font-size: 11px; font-weight: 650; }
+.faixa-config-total strong { color: var(--meta-color); font-size: 19px; }
+
 .config-section {
   margin: 4px 0 18px;
   padding: 14px;

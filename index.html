@@ -377,20 +377,6 @@
     <option value="eletrico">El&eacute;trico</option>
   </select>
 
-  <div class="grid-config-retirada">
-    <div>
-      <label>Retirada desejada do m&ecirc;s</label>
-      <input type="text" id="retiradaDesejada" inputmode="decimal" placeholder="R$ 0,00">
-      <small>O valor que você quer garantir para si depois de cobrir os custos.</small>
-    </div>
-    <div>
-      <label>Meta adicional de conforto</label>
-      <input type="text" id="confortoDesejado" inputmode="decimal" placeholder="R$ 0,00">
-      <small>O extra para chegar ao padrão de vida que você deseja.</small>
-    </div>
-  </div>
-
-  <button data-action="salvar-config">Salvar configurações</button>
 </div>
 
 <div class="card">
@@ -417,6 +403,32 @@
   <div class="metas-lista" id="metasLista"></div>
 </div>
 
+<div class="card metas-financeiras-card">
+  <h3 class="heading-with-icon"><span class="heading-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M3 12h18"/><path d="M12 3v18"/><circle cx="12" cy="12" r="8"/></svg></span>Metas e retirada</h3>
+  <p class="config-helper">Defina em sequência o que o trabalho precisa pagar, o que você quer receber e o extra que representa conforto.</p>
+
+  <section class="faixa-config faixa-sobrevivencia">
+    <div class="faixa-config-head"><span>1</span><div><h4>Sobrevivência</h4><p>Todos os custos essenciais do mês.</p></div></div>
+    <div class="faixa-config-total"><span>Custos cadastrados</span><strong id="configResumoSobrevivencia">R$ 0,00</strong></div>
+  </section>
+
+  <section class="faixa-config faixa-estabilidade">
+    <div class="faixa-config-head"><span>2</span><div><h4>Estabilidade</h4><p>Custos cobertos mais a retirada que você quer garantir.</p></div></div>
+    <label>Quanto quero receber no mês</label>
+    <input type="text" id="retiradaDesejada" inputmode="decimal" placeholder="R$ 0,00">
+    <div class="faixa-config-total"><span>Total para chegar à estabilidade</span><strong id="configResumoEstabilidade">R$ 0,00</strong></div>
+  </section>
+
+  <section class="faixa-config faixa-conforto">
+    <div class="faixa-config-head"><span>3</span><div><h4>Conforto</h4><p>Um valor adicional, além da estabilidade, para o padrão de vida desejado.</p></div></div>
+    <label>Quanto quero ter além da estabilidade</label>
+    <input type="text" id="confortoDesejado" inputmode="decimal" placeholder="R$ 0,00">
+    <div class="faixa-config-total"><span>Total para chegar ao conforto</span><strong id="configResumoConforto">R$ 0,00</strong></div>
+  </section>
+
+  <button data-action="salvar-config">Salvar planejamento do mês</button>
+</div>
+
 <div class="card">
   <h3 class="heading-with-icon"><span class="heading-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg></span>Dados</h3>
 
@@ -435,7 +447,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="app.js?v=20260727-rotina"></script>
+<script src="app.js?v=20260727-metas-claras"></script>
 
 </div>
 </body>

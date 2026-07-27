@@ -84,9 +84,6 @@ if (document.getElementById("tipoVeiculo")) {
 if (document.getElementById("litros")) {
   document.getElementById("litros").addEventListener("input", event => formatarCampoDecimalDireto(event.target));
 }
-if (document.getElementById("confortoDesejado")) {
-  document.getElementById("confortoDesejado").addEventListener("blur", event => formatarCampoMoeda(event.target));
-}
 document.querySelectorAll("[data-weekday]").forEach(botao => {
   botao.addEventListener("click", () => alternarDiaSemana(Number(botao.dataset.weekday)));
 });
@@ -107,11 +104,17 @@ if (document.getElementById("btnCalendarioAnterior")) {
 document.getElementById("btnExportar").addEventListener("click", exportarJSON);
 document.getElementById("btnImportar").addEventListener("click", () => document.getElementById("importarArquivo").click());
 document.getElementById("btnLimpar").addEventListener("click", limparDados);
-["valor", "metaValor", "retiradaDesejada"].forEach(id => {
+["valor", "metaValor", "retiradaDesejada", "confortoDesejado"].forEach(id => {
   const campo = document.getElementById(id);
   if (campo) {
-    campo.addEventListener("input", event => formatarCampoMoedaDigitando(event.target));
-    campo.addEventListener("blur", event => formatarCampoMoeda(event.target));
+    campo.addEventListener("input", event => {
+      formatarCampoMoedaDigitando(event.target);
+      if (id === "retiradaDesejada" || id === "confortoDesejado") atualizarResumoMetasConfig();
+    });
+    campo.addEventListener("blur", event => {
+      formatarCampoMoeda(event.target);
+      if (id === "retiradaDesejada" || id === "confortoDesejado") atualizarResumoMetasConfig();
+    });
   }
 });
 
@@ -858,6 +861,7 @@ function renderizarMetasConfig() {
   const container = document.getElementById("metasLista");
   if (!container) return;
   migrarMetasConfiguradas();
+  atualizarResumoMetasConfig();
 
   if (!config.metas.length) {
     container.innerHTML = '<div class="meta-empty">Nenhuma meta cadastrada ainda.</div>';
@@ -885,6 +889,25 @@ function renderizarMetasConfig() {
   container.querySelectorAll("[data-meta-id]").forEach(botao => {
     botao.addEventListener("click", () => excluirMeta(botao.getAttribute("data-meta-id")));
   });
+}
+
+function atualizarResumoMetasConfig() {
+  const retiradaCampo = document.getElementById("retiradaDesejada");
+  const confortoCampo = document.getElementById("confortoDesejado");
+  const configPrevia = {
+    ...config,
+    modeloMetasVersao: 2,
+    retiradaDesejada: retiradaCampo ? parseMoeda(retiradaCampo.value) : (Number(config.retiradaDesejada) || 0),
+    confortoDesejado: confortoCampo ? parseMoeda(confortoCampo.value) : (Number(config.confortoDesejado) || 0)
+  };
+  const totais = totaisMetasConfig(configPrevia);
+  const atualizar = (id, valor) => {
+    const elemento = document.getElementById(id);
+    if (elemento) elemento.innerText = moeda(valor);
+  };
+  atualizar("configResumoSobrevivencia", totais.sobrevivencia);
+  atualizar("configResumoEstabilidade", totais.estabilidade);
+  atualizar("configResumoConforto", totais.conforto);
 }
 
 async function excluirMeta(id) {
