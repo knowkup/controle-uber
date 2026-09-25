@@ -1409,10 +1409,13 @@ function iconeCalendario() {
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="4"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/></svg>`;
 }
 
-function metaProjetadaStatus(projecao, sobrevivencia, estabilidade, conforto) {
-  if (conforto > 0 && projecao >= conforto) return "Mandou muito bem, o mês chegou no conforto.";
-  if (estabilidade > 0 && projecao >= estabilidade) return "Boa, o mês está firme. Agora é buscar conforto.";
-  if (sobrevivencia > 0 && projecao >= sobrevivencia) return "Parabéns, o mês tá pago. Bora buscar estabilidade.";
+function metaProjetadaStatus(projecao, realizado, sobrevivencia, estabilidade, conforto) {
+  if (conforto > 0 && realizado >= conforto) return "Você alcançou o Conforto neste mês.";
+  if (conforto > 0 && projecao >= conforto) return `No ritmo atual, sua projeção chega ao Conforto. Faltam ${moeda(Math.max(conforto - realizado, 0))} para você alcançá-lo.`;
+  if (estabilidade > 0 && realizado >= estabilidade) return "Você alcançou a Estabilidade neste mês.";
+  if (estabilidade > 0 && projecao >= estabilidade) return `No ritmo atual, sua projeção chega à Estabilidade. Faltam ${moeda(Math.max(estabilidade - realizado, 0))} para você alcançá-la.`;
+  if (sobrevivencia > 0 && realizado >= sobrevivencia) return "Você cobriu os custos deste mês.";
+  if (sobrevivencia > 0 && projecao >= sobrevivencia) return `No ritmo atual, sua projeção chega à Sobrevivência. Faltam ${moeda(Math.max(sobrevivencia - realizado, 0))} para você alcançá-la.`;
   return "O mês ainda não se pagou. A primeira missão é chegar na sobrevivência.";
 }
 
@@ -1482,21 +1485,25 @@ function atualizarDashboard(ctx) {
   const diasPlanejadosAtual = ctx.diasPlanejadosAtual || 0;
   const mediaDiaValor = ctx.mediaDiaValor || 0;
 
-  const metaConsistenteValor = totaisMetasConfig().estabilidade;
+  const metaConsistenteOriginal = totaisMetasConfig().estabilidade;
   const custosBaseSobra = totaisCustosConfig().sobrevivencia;
 
   const projecaoMes = mediaDiaValor * diasPlanejadosAtual;
   const custosAtuais = Math.abs(saidas);
   const baseRetiradaPrevista = Math.max(custosBaseSobra, custosAtuais);
   const sobraProjetada = projecaoMes - baseRetiradaPrevista;
+  const acrescimoDeCustos = Math.max(custosAtuais - custosSemParcela, 0);
+  const sobrevivenciaAtualizada = custosSemParcela + acrescimoDeCustos;
+  const estabilidadeAtualizada = metaConsistenteOriginal + acrescimoDeCustos;
+  const confortoAtualizado = custosTotais + acrescimoDeCustos;
   
   dashboardProjecao.innerText = moeda(projecaoMes);
   if (document.getElementById("dashboardAtualMes")) dashboardAtualMes.innerText = moeda(entradas);
   if (document.getElementById("dashboardSobraProjetada")) dashboardSobraProjetada.innerText = moeda(sobraProjetada);
   if (document.getElementById("dashboardSobraBase")) {
     dashboardSobraBase.innerText = custosAtuais > custosBaseSobra
-      ? `Custos já lançados: ${moedaSaida(custosAtuais)}`
-      : `Custos base: ${moeda(baseRetiradaPrevista)}`;
+      ? `Considerando custos de ${moeda(custosAtuais)} (${moeda(custosAtuais - custosBaseSobra)} acima do planejado)`
+      : `Considerando custos de ${moeda(baseRetiradaPrevista)}`;
   }
   const sobraBox = document.querySelector(".dashboard-sobra-box");
   if (sobraBox) {
@@ -1508,33 +1515,33 @@ function atualizarDashboard(ctx) {
     : "Comece registrando seus ganhos para gerar projeção";
 
   const statusTexto = diasTrabalhadosValor > 0
-    ? metaProjetadaStatus(projecaoMes, custosSemParcela, metaConsistenteValor, custosTotais)
-    : "Aguardando lançamentos";
+    ? metaProjetadaStatus(projecaoMes, entradas, sobrevivenciaAtualizada, estabilidadeAtualizada, confortoAtualizado)
+    : "Registre ganhos para calcular sua projeção do mês.";
   dashboardStatus.innerText = statusTexto;
 
-  atualizarReguaRitmo(projecaoMes, custosSemParcela, metaConsistenteValor, custosTotais);
+  atualizarReguaRitmo(projecaoMes, sobrevivenciaAtualizada, estabilidadeAtualizada, confortoAtualizado);
   faixaTexto.innerText = diasTrabalhadosValor > 0
     ? `Projeção: ${moeda(projecaoMes)}. ${statusTexto}`
     : "Registre ganhos para calcular o ritmo do mês.";
 
-  faixaMinima.innerText = `Sobrevivência ${moeda(custosSemParcela)}`;
-  const proximaMetaResumo = proximaMetaAtiva(projecaoMes, custosSemParcela, metaConsistenteValor, custosTotais);
+  faixaMinima.innerText = `Sobrevivência ${moeda(sobrevivenciaAtualizada)}`;
+  const proximaMetaResumo = proximaMetaAtiva(projecaoMes, sobrevivenciaAtualizada, estabilidadeAtualizada, confortoAtualizado);
   if (diasTrabalhadosValor > 0) {
     faixaTexto.innerText = proximaMetaResumo
       ? `Projeção ${moeda(projecaoMes)} · próximo marco: ${proximaMetaResumo.nome} (${moeda(proximaMetaResumo.valor)})`
       : `Projeção ${moeda(projecaoMes)} · acima da faixa de conforto`;
   }
 
-  faixaConsistente.innerText = `Estabilidade ${moeda(metaConsistenteValor)}`;
-  faixaIdeal.innerText = `Conforto ${moeda(custosTotais)}`;
+  faixaConsistente.innerText = `Estabilidade ${moeda(estabilidadeAtualizada)}`;
+  faixaIdeal.innerText = `Conforto ${moeda(confortoAtualizado)}`;
 
-  atualizarMetaCard("Minima", "Sobrevivência", custosSemParcela, entradas, diasRestantes);
-  atualizarMetaCard("Consistente", "Estabilidade", metaConsistenteValor, entradas, diasRestantes);
-  atualizarMetaCard("Ideal", "Conforto", custosTotais, entradas, diasRestantes);
+  atualizarMetaCard("Minima", "Sobrevivência", custosSemParcela, sobrevivenciaAtualizada, entradas, diasRestantes);
+  atualizarMetaCard("Consistente", "Estabilidade", metaConsistenteOriginal, estabilidadeAtualizada, entradas, diasRestantes);
+  atualizarMetaCard("Ideal", "Conforto", custosTotais, confortoAtualizado, entradas, diasRestantes);
 
   dashMediaDia.innerText = moeda(mediaDiaValor);
   dashMediaSub.innerText = diasTrabalhadosValor > 0 ? `${diasTrabalhadosValor} dia(s) trabalhado(s)` : "sem ganhos registrados";
-  const proximaMeta = proximaMetaAtiva(entradas, custosSemParcela, metaConsistenteValor, custosTotais);
+  const proximaMeta = proximaMetaAtiva(entradas, sobrevivenciaAtualizada, estabilidadeAtualizada, confortoAtualizado);
   const metaAjustadaCard = dashMetaAjustada.closest(".kpi-card");
   if (proximaMeta) {
     const valorDiaNecessario = diasRestantes > 0 ? Math.max((proximaMeta.valor - entradas) / diasRestantes, 0) : 0;
@@ -1547,33 +1554,11 @@ function atualizarDashboard(ctx) {
   }
 
   const semanas = calcularSemanasDoMes(!!ctx.snapMesFechado);
-  const metaSemanalBase = proximaMeta || { nome: "Conforto", valor: custosTotais };
-  const metaSemanal = metaSemanalBase.valor > 0 ? metaSemanalBase.valor / Math.max(semanas.length, 1) : 0;
-  const semanaAtual = semanas.find(s => s.isAtual) || semanas[0] || { valor: 0 };
-  const ganhoSemanaAtual = semanaAtual.valor || 0;
-  const percSemana = metaSemanal > 0 ? Math.min((ganhoSemanaAtual / metaSemanal) * 100, 999) : 0;
-
-  if (document.getElementById("dashSemanaExecutadoValor")) dashSemanaExecutadoValor.innerText = moeda(ganhoSemanaAtual);
-  if (document.getElementById("dashMetaSemana")) dashMetaSemana.innerText = `Meta semanal: ${moeda(metaSemanal)}`;
-  if (document.getElementById("dashSemanaStatus")) dashSemanaStatus.innerText = `${Math.round(percSemana)}%`;
-  if (document.getElementById("dashSemanaLabel")) dashSemanaLabel.innerText = "Ritmo da semana";
-  if (document.getElementById("dashSemanaFalta")) {
-    const faltaSemana = Math.max(metaSemanal - ganhoSemanaAtual, 0);
-    dashSemanaFalta.innerText = metaSemanal > 0
-      ? (faltaSemana > 0 ? `Faltam ${moeda(faltaSemana)} nesta semana` : "Meta semanal atingida")
-      : "Configure as metas";
-  }
-  const melhorDia = obterMelhorDiaSemanaAtual();
-  if (document.getElementById("dashMelhorDiaValor")) dashMelhorDiaValor.innerText = melhorDia ? moeda(melhorDia.valor) : "—";
-  if (document.getElementById("dashMelhorDiaLabel")) {
-    dashMelhorDiaLabel.innerText = melhorDia ? `${formatarData(melhorDia.data)} · seu melhor resultado` : "Registre ganhos nesta semana";
-  }
-
-  const metaSemanalSemanasDoMes = metaConsistenteValor > 0 ? metaConsistenteValor / Math.max(semanas.length, 1) : 0;
+  const metaSemanalSemanasDoMes = estabilidadeAtualizada > 0 ? estabilidadeAtualizada / Math.max(semanas.length, 1) : 0;
   renderizarSemanas(semanas, metaSemanalSemanasDoMes);
 }
 
-function atualizarMetaCard(nome, rotulo, meta, atual, diasRestantes) {
+function atualizarMetaCard(nome, rotulo, metaOriginal, metaAtualizada, atual, diasRestantes) {
   const card = document.getElementById(`cardMeta${nome}`);
   const pctEl = document.getElementById(`dashPct${nome}`);
   const barEl = document.getElementById(`dashBar${nome}`);
@@ -1584,7 +1569,7 @@ function atualizarMetaCard(nome, rotulo, meta, atual, diasRestantes) {
 
   card.classList.remove("ok", "alerta", "longe");
 
-  if (!meta || meta <= 0) {
+  if (!metaAtualizada || metaAtualizada <= 0) {
     pctEl.innerText = "—";
     barEl.style.width = "0%";
     progressoEl.innerHTML = `<div class="meta-line"><span>Executado</span><strong>${moeda(atual)}</strong></div>`;
@@ -1593,16 +1578,17 @@ function atualizarMetaCard(nome, rotulo, meta, atual, diasRestantes) {
     return;
   }
 
-  const percentualExecutado = (atual / meta) * 100;
+  const percentualExecutado = (atual / metaAtualizada) * 100;
   const percentualVisual = Math.min(Math.max(percentualExecutado, 0), 100);
-  const faltaAtual = Math.max(meta - atual, 0);
-  const acima = Math.max(atual - meta, 0);
+  const faltaAtual = Math.max(metaAtualizada - atual, 0);
+  const acima = Math.max(atual - metaAtualizada, 0);
   const valorDiaNecessario = diasRestantes > 0 ? faltaAtual / diasRestantes : 0;
 
   pctEl.innerText = `${Math.round(percentualExecutado)}%`;
   barEl.style.width = `${percentualVisual}%`;
   progressoEl.innerHTML = `
-    <div class="meta-line"><span>Meta</span><strong>${moeda(meta)}</strong></div>
+    <div class="meta-line"><span>Meta</span><strong>${moeda(metaOriginal)}</strong></div>
+    <div class="meta-line"><span>Meta atualizada</span><strong>${moeda(metaAtualizada)}</strong></div>
     <div class="meta-line"><span>Executado</span><strong>${moeda(atual)} · ${Math.round(percentualExecutado)}%</strong></div>
     <div class="meta-line"><span>Faltam</span><strong>${moeda(faltaAtual)}</strong></div>
   `;

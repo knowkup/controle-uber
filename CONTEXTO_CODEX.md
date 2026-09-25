@@ -127,3 +127,5 @@ Memoria compartilhada do projeto Controle Uber para uso entre computadores, sess
 - Publicar `firestore.rules` no Firebase apos autenticar com `firebase login`.
 - Migrar `alert()` e `confirm()` para modal/toast proprio.
 - Fazer teste visual em mobile real apos alteracoes de layout.
+
+- Em 2026-09-25, Dashboard simplificada: removido o card Semana atual; cada card de meta agora mostra Meta original e Meta atualizada. A meta atualizada incorpora custos lançados acima do planejado, atualizando também percentuais, régua e meta diária. A projeção agora diferencia explicitamente uma meta prevista de uma meta já alcançada no realizado.
