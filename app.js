@@ -935,7 +935,7 @@ function renderizarMetasConfig() {
   });
 }
 if (document.getElementById("simMes")) {
-  ["simMediaDia", "simCustoKm", "simMetaReceita", "simCustos", "simRetirada", "simConforto"].forEach(id => {
+  ["simReceitaKm", "simCustos", "simRetirada", "simConforto"].forEach(id => {
     const campo = document.getElementById(id);
     campo.addEventListener("input", event => {
       formatarCampoMoedaDigitando(event.target);
@@ -946,16 +946,10 @@ if (document.getElementById("simMes")) {
       renderizarSimulacao();
     });
   });
-  ["simKmDia", "simMetaKm"].forEach(id => {
-    document.getElementById(id).addEventListener("input", renderizarSimulacao);
-  });
   document.getElementById("simMes").addEventListener("change", atualizarPeriodoSimulacao);
   document.getElementById("simAno").addEventListener("change", atualizarPeriodoSimulacao);
   ["simReferencia", "simRefMes", "simRefAno", "simRefInicio", "simRefFim"].forEach(id => {
     document.getElementById(id).addEventListener("change", atualizarReferenciaSimulacao);
-  });
-  document.querySelectorAll("[data-sim-mode]").forEach(botao => {
-    botao.addEventListener("click", () => alterarModoSimulacao(botao.dataset.simMode));
   });
   document.getElementById("simTrabalhoEmFeriados").addEventListener("change", event => {
     garantirSimulacao();
@@ -2103,7 +2097,6 @@ function garantirSimulacao() {
   const totais = totaisMetasConfig(config);
   const inicioMes = dataISOCalendario(hoje.getFullYear(), hoje.getMonth() + 1, 1);
   const metricasBase = calcularMetricasDoPeriodo(inicioMes, dataISODeData(hoje));
-  const diasPlanejados = calcularDiasPlanejadosDoMes(hoje.getFullYear(), hoje.getMonth() + 1, config);
   simulacao = {
     ano: hoje.getFullYear(),
     mes: hoje.getMonth() + 1,
@@ -2116,12 +2109,7 @@ function garantirSimulacao() {
     refAno: hoje.getFullYear(),
     refInicio: inicioMes,
     refFim: dataISODeData(hoje),
-    modo: "manual",
-    mediaDia: metricasBase.receitaDia,
-    kmDia: metricasBase.kmDia,
-    custoKm: metricasBase.custoKm,
-    metaKm: metricasBase.kmDia * diasPlanejados,
-    metaReceita: metricasBase.receitaDia * diasPlanejados,
+    receitaKm: metricasBase.receitaKm,
     custos: totais.sobrevivencia,
     retirada: Math.max(totais.estabilidade - totais.sobrevivencia, 0),
     conforto: Math.max(totais.conforto - totais.estabilidade, 0)
@@ -2134,11 +2122,7 @@ function garantirSimulacao() {
   simRefAno.value = String(simulacao.refAno);
   simRefInicio.value = simulacao.refInicio;
   simRefFim.value = simulacao.refFim;
-  simMediaDia.value = simulacao.mediaDia ? moeda(simulacao.mediaDia) : "";
-  simKmDia.value = simulacao.kmDia ? Math.round(simulacao.kmDia).toLocaleString("pt-BR") : "";
-  simCustoKm.value = simulacao.custoKm ? moeda(simulacao.custoKm) : "";
-  simMetaKm.value = simulacao.metaKm ? Math.round(simulacao.metaKm).toLocaleString("pt-BR") : "";
-  simMetaReceita.value = simulacao.metaReceita ? moeda(simulacao.metaReceita) : "";
+  simReceitaKm.value = simulacao.receitaKm ? moeda(simulacao.receitaKm) : "";
   simCustos.value = simulacao.custos ? moeda(simulacao.custos) : "";
   simRetirada.value = simulacao.retirada ? moeda(simulacao.retirada) : "";
   simConforto.value = simulacao.conforto ? moeda(simulacao.conforto) : "";
@@ -2173,26 +2157,14 @@ function atualizarReferenciaSimulacao() {
   simulacao.refFim = simRefFim.value || simulacao.refFim;
   document.querySelectorAll(".sim-referencia-mes").forEach(elemento => elemento.classList.toggle("hidden", simulacao.referencia !== "mes-especifico"));
   document.querySelectorAll(".sim-referencia-periodo").forEach(elemento => elemento.classList.toggle("hidden", simulacao.referencia !== "periodo"));
-  renderizarSimulacao();
-}
-
-function alterarModoSimulacao(modo) {
-  garantirSimulacao();
-  const proximoModo = modo === "automatico" ? "automatico" : "manual";
-  simulacao.restaurarValoresManuais = simulacao.modo === "automatico" && proximoModo === "manual";
-  simulacao.modo = proximoModo;
+  const intervalo = intervaloReferenciaSimulacao();
+  simulacao.receitaKm = calcularMetricasDoPeriodo(intervalo.inicio, intervalo.fim).receitaKm;
   renderizarSimulacao();
 }
 
 function atualizarValoresSimulacao() {
   garantirSimulacao();
-  if (simulacao.modo === "manual" && !simulacao.restaurarValoresManuais) {
-    simulacao.mediaDia = parseMoeda(simMediaDia.value);
-    simulacao.kmDia = parseDecimalBR(simKmDia.value);
-    simulacao.custoKm = parseMoeda(simCustoKm.value);
-  }
-  simulacao.metaKm = parseDecimalBR(simMetaKm.value);
-  simulacao.metaReceita = parseMoeda(simMetaReceita.value);
+  simulacao.receitaKm = parseMoeda(simReceitaKm.value);
   simulacao.custos = parseMoeda(simCustos.value);
   simulacao.retirada = parseMoeda(simRetirada.value);
   simulacao.conforto = parseMoeda(simConforto.value);
@@ -2258,6 +2230,18 @@ function atualizarMetaSimulada(idMeta, idNecessario, meta, faturamentoProjetado,
   }
 }
 
+function atualizarMetaPlanejada(prefixo, valorMeta, diasPlanejados, receitaKm, custos) {
+  const total = document.getElementById(`simMeta${prefixo}`);
+  const porDia = document.getElementById(`sim${prefixo}Dia`);
+  const kmDia = document.getElementById(`sim${prefixo}Km`);
+  const custoKm = document.getElementById(`sim${prefixo}CustoKm`);
+  const kmTotal = receitaKm > 0 ? valorMeta / receitaKm : 0;
+  if (total) total.innerText = moeda(valorMeta);
+  if (porDia) porDia.innerText = diasPlanejados > 0 ? `${moeda(valorMeta / diasPlanejados)}/dia` : "Defina os dias";
+  if (kmDia) kmDia.innerText = diasPlanejados > 0 && kmTotal > 0 ? `${Math.round(kmTotal).toLocaleString("pt-BR")} km no mês • ${Math.round(kmTotal / diasPlanejados).toLocaleString("pt-BR")} km/dia` : "— km/dia";
+  if (custoKm) custoKm.innerText = kmTotal > 0 ? `${moeda(custos / kmTotal)} custo/km` : "— custo/km";
+}
+
 function renderizarSimulacao() {
   garantirSimulacao();
   atualizarValoresSimulacao();
@@ -2265,23 +2249,6 @@ function renderizarSimulacao() {
   const metricasBase = calcularMetricasDoPeriodo(intervaloReferencia.inicio, intervaloReferencia.fim);
   const configSim = configDaSimulacao();
   const diasPlanejados = calcularDiasPlanejadosDoMes(simulacao.ano, simulacao.mes, configSim);
-  const hoje = new Date();
-  const mesAtual = simulacao.ano === hoje.getFullYear() && simulacao.mes === hoje.getMonth() + 1;
-  const inicioMesProjetado = dataISOCalendario(simulacao.ano, simulacao.mes, 1);
-  const fimMesProjetado = mesAtual
-    ? dataISODeData(hoje)
-    : dataISOCalendario(simulacao.ano, simulacao.mes, new Date(simulacao.ano, simulacao.mes, 0).getDate());
-  const metricasReais = calcularMetricasDoPeriodo(inicioMesProjetado, fimMesProjetado);
-  const faturamentoAtual = metricasReais.receita;
-  const diasParaPrevisao = mesAtual ? diasPlanejadosRestantes(simulacao.ano, simulacao.mes, configSim) : diasPlanejados;
-  const modoAutomatico = simulacao.modo === "automatico";
-  const receitaDia = modoAutomatico ? metricasBase.receitaDia : simulacao.mediaDia;
-  const kmDia = modoAutomatico ? metricasBase.kmDia : simulacao.kmDia;
-  const custoKm = modoAutomatico ? metricasBase.custoKm : simulacao.custoKm;
-  const faturamentoProjetado = faturamentoAtual + (receitaDia * diasParaPrevisao);
-  const kmProjetado = metricasReais.kmRodado + (kmDia * diasParaPrevisao);
-  const custosProjetados = metricasReais.custos + ((kmDia * diasParaPrevisao) * custoKm);
-  const resultadoProjetado = faturamentoProjetado - custosProjetados;
   const sobrevivencia = simulacao.custos;
   const estabilidade = sobrevivencia + simulacao.retirada;
   const conforto = estabilidade + simulacao.conforto;
@@ -2296,35 +2263,13 @@ function renderizarSimulacao() {
   simBaseDias.innerText = metricasBase.diasTrabalhados ? `${metricasBase.diasTrabalhados} dias` : "—";
   simBaseReceitaDia.innerText = metricasBase.receitaDia ? moeda(metricasBase.receitaDia) : "—";
   simBaseKmDia.innerText = metricasBase.kmDia ? `${Math.round(metricasBase.kmDia)} km` : "—";
-  simBaseReceitaKm.innerText = metricasBase.receitaKm ? moeda(metricasBase.receitaKm) : "—";
   simBaseCustoKm.innerText = metricasBase.custoKm ? moeda(metricasBase.custoKm) : "—";
-
-  ["simMediaDia", "simKmDia", "simCustoKm"].forEach(id => document.getElementById(id).disabled = modoAutomatico);
-  simMediaDia.value = receitaDia ? moeda(receitaDia) : "";
-  simKmDia.value = kmDia ? Math.round(kmDia).toLocaleString("pt-BR") : "";
-  simCustoKm.value = custoKm ? moeda(custoKm) : "";
-  simulacao.restaurarValoresManuais = false;
-  document.querySelectorAll("[data-sim-mode]").forEach(botao => botao.classList.toggle("ativo", botao.dataset.simMode === simulacao.modo));
-
+  simReceitaKm.value = simulacao.receitaKm ? moeda(simulacao.receitaKm) : "";
   simRotinaResumo.innerText = `${diasPlanejados} dias planejados`;
-  simFaturamentoProjetado.innerText = moeda(faturamentoProjetado);
-  simDiasRestantes.innerText = String(diasParaPrevisao);
-  simKmProjetado.innerText = `${Math.round(kmProjetado).toLocaleString("pt-BR")} km`;
-  simCustosProjetados.innerText = moeda(custosProjetados);
-  simResultadoProjetado.innerText = moeda(resultadoProjetado);
-  simFaturamentoSub.innerText = mesAtual
-    ? `${moeda(faturamentoAtual)} já registrado + ${moeda(receitaDia)} por ${diasParaPrevisao} dia(s) restante(s)`
-    : `${moeda(receitaDia)} por ${diasPlanejados} dia(s) planejado(s)`;
-  simRealizadoAteHoje.innerText = moeda(faturamentoAtual);
-  simRealizadoDetalhe.innerText = metricasReais.diasTrabalhados
-    ? `${metricasReais.diasTrabalhados} dia(s) trabalhado(s) • ${Math.round(metricasReais.kmRodado).toLocaleString("pt-BR")} km rodados`
-    : "Sem lançamentos no mês da projeção.";
-  simCenarioReceitaKm.innerText = simulacao.metaKm > 0 ? moeda(simulacao.metaReceita / simulacao.metaKm) : "—";
-  simCenarioCustoKm.innerText = simulacao.metaKm > 0 ? moeda(simulacao.custos / simulacao.metaKm) : "—";
-  simCenarioResultado.innerText = moeda(simulacao.metaReceita - simulacao.custos);
-  atualizarMetaSimulada("simMetaSobrevivencia", "simNecessarioSobrevivencia", sobrevivencia, faturamentoProjetado, faturamentoAtual, diasParaPrevisao, "cobrir os custos");
-  atualizarMetaSimulada("simMetaEstabilidade", "simNecessarioEstabilidade", estabilidade, faturamentoProjetado, faturamentoAtual, diasParaPrevisao, "chegar à estabilidade");
-  atualizarMetaSimulada("simMetaConforto", "simNecessarioConforto", conforto, faturamentoProjetado, faturamentoAtual, diasParaPrevisao, "chegar ao conforto");
+  simDiasPlanejadosPlano.innerText = `${diasPlanejados} dias`;
+  atualizarMetaPlanejada("Sobrevivencia", sobrevivencia, diasPlanejados, simulacao.receitaKm, simulacao.custos);
+  atualizarMetaPlanejada("Estabilidade", estabilidade, diasPlanejados, simulacao.receitaKm, simulacao.custos);
+  atualizarMetaPlanejada("Conforto", conforto, diasPlanejados, simulacao.receitaKm, simulacao.custos);
 
   document.querySelectorAll("[data-sim-weekday]").forEach(botao => {
     botao.classList.toggle("ativo", simulacao.diasSemana.includes(Number(botao.dataset.simWeekday)));

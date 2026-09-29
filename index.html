@@ -7,7 +7,7 @@
 <title>Controle Uber</title>
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="styles.css?v=20260929-planejamento-projecoes">
+<link rel="stylesheet" href="styles.css?v=20260929-planejamento-mensal">
 </head>
 
 <body>
@@ -276,12 +276,12 @@
 
 <div id="telaSimulacao" class="tela hidden">
   <div class="simulation-hero">
-    <div><span>SIMULAÇÃO</span><h2>Planejamento e projeções</h2><p>Use o ritmo real como base e ajuste o que espera para os próximos dias.</p></div>
-    <div class="simulation-period"><label>Mês da projeção</label><select id="simMes"></select><label>Ano</label><select id="simAno"></select></div>
+    <div><span>PLANEJAMENTO</span><h2>Planeje o seu próximo mês</h2><p>Escolha a base, defina seus dias e veja o ritmo necessário para cada meta.</p></div>
+    <div class="simulation-period"><label>Mês planejado</label><select id="simMes"></select><label>Ano</label><select id="simAno"></select></div>
   </div>
 
   <div class="card sim-base-card">
-    <div class="config-section-head"><div><h3>Base automática</h3><p>Escolha os lançamentos que representam seu ritmo. Os números abaixo não são metas e não alteram nenhum dado.</p></div></div>
+    <div class="config-section-head"><div><h3>Ponto de partida</h3><p>Escolha uma referência. O valor por KM pode ser ajustado para este estudo.</p></div></div>
     <div class="sim-referencia-grid">
       <div><label>Usar dados de</label><select id="simReferencia"><option value="mes-atual">Mês atual até hoje</option><option value="mes-especifico">Um mês específico</option><option value="periodo">Período personalizado</option></select></div>
       <div class="sim-referencia-mes hidden"><label>Mês</label><select id="simRefMes"></select></div>
@@ -289,54 +289,38 @@
       <div class="sim-referencia-periodo hidden"><label>Data inicial</label><input type="date" id="simRefInicio"></div>
       <div class="sim-referencia-periodo hidden"><label>Data final</label><input type="date" id="simRefFim"></div>
     </div>
-    <div class="sim-metricas-base">
-      <div><span>Dias trabalhados</span><strong id="simBaseDias">0</strong></div>
-      <div><span>Receita/dia</span><strong id="simBaseReceitaDia">R$ 0,00</strong></div>
-      <div><span>KM/dia</span><strong id="simBaseKmDia">0 km</strong></div>
-      <div><span>Receita/KM</span><strong id="simBaseReceitaKm">—</strong></div>
-      <div><span>Custo/KM</span><strong id="simBaseCustoKm">—</strong></div>
-    </div>
-  </div>
-
-  <div class="simulation-grid sim-projecao-grid">
-    <div class="card simulation-input-card sim-previsao-card">
-      <div class="sim-previsao-head"><div><h3>Previsão para os dias restantes</h3><p class="config-helper">O realizado fica preservado. Ajuste somente o ritmo que espera daqui em diante.</p></div><div class="sim-modo" role="group" aria-label="Modo da projeção"><button type="button" data-sim-mode="automatico">Automático</button><button type="button" data-sim-mode="manual" class="ativo">Ajustado por mim</button></div></div>
-      <div class="sim-realizado"><span>Já realizado até hoje</span><strong id="simRealizadoAteHoje">R$ 0,00</strong><small id="simRealizadoDetalhe">Sem lançamentos no mês da projeção.</small></div>
-      <div class="sim-valores-grid sim-previsao-valores">
-        <div><label>Receita/dia</label><input type="text" id="simMediaDia" inputmode="decimal" placeholder="R$ 0,00"></div>
-        <div><label>KM/dia</label><input type="text" id="simKmDia" inputmode="decimal" placeholder="0 km"></div>
-        <div><label>Custo/KM</label><input type="text" id="simCustoKm" inputmode="decimal" placeholder="R$ 0,00"></div>
+    <div class="sim-base-estudo">
+      <div class="sim-metricas-base">
+        <div><span>Dias trabalhados</span><strong id="simBaseDias">—</strong></div>
+        <div><span>Receita/dia</span><strong id="simBaseReceitaDia">—</strong></div>
+        <div><span>KM/dia</span><strong id="simBaseKmDia">—</strong></div>
+        <div><span>Custo/KM</span><strong id="simBaseCustoKm">—</strong></div>
       </div>
-    </div>
-    <div class="card simulation-result-card">
-      <span class="sim-result-label">Previsão de fechamento</span><strong id="simFaturamentoProjetado">R$ 0,00</strong><p id="simFaturamentoSub">Informe um ritmo para simular o resultado.</p>
-      <div class="sim-result-mini-grid"><div><span>Dias restantes</span><strong id="simDiasRestantes">0</strong></div><div><span>KM previstos</span><strong id="simKmProjetado">0 km</strong></div><div><span>Custos previstos</span><strong id="simCustosProjetados">R$ 0,00</strong></div><div><span>Resultado previsto</span><strong id="simResultadoProjetado">R$ 0,00</strong></div></div>
+      <div class="sim-receita-km"><label>Receita por KM usada no plano</label><input type="text" id="simReceitaKm" inputmode="decimal" placeholder="R$ 0,00"><small>Preenchida pela referência; ajuste se espera uma média diferente.</small></div>
     </div>
   </div>
 
   <div class="card">
-    <div class="config-section-head"><div><h3>Rotina simulada</h3><p>Escolha como pretende trabalhar neste mês. Toque em um dia para marcar folga ou trabalho extra.</p></div><strong id="simRotinaResumo">0 dias planejados</strong></div>
+    <div class="config-section-head"><div><h3>Dias que vou trabalhar</h3><p>Monte a rotina do mês planejado. Toque em uma data para marcar trabalho ou folga.</p></div><strong id="simRotinaResumo">0 dias planejados</strong></div>
     <div class="rotina-semana" id="simRotinaSemana" aria-label="Dias habituais de trabalho na simulação"><button type="button" data-sim-weekday="7">Dom</button><button type="button" data-sim-weekday="1">Seg</button><button type="button" data-sim-weekday="2">Ter</button><button type="button" data-sim-weekday="3">Qua</button><button type="button" data-sim-weekday="4">Qui</button><button type="button" data-sim-weekday="5">Sex</button><button type="button" data-sim-weekday="6">Sáb</button></div>
     <label class="toggle-linha"><input type="checkbox" id="simTrabalhoEmFeriados"> <span>Também trabalhar nos feriados nacionais</span></label>
     <div class="calendario-rotina sim-calendario"><div class="calendario-semana-labels"><span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span></div><div class="calendario-rotina-grid" id="simCalendario"></div></div>
   </div>
 
   <div class="card sim-cenario-card">
-    <div class="config-section-head"><div><h3>Cenário desejado do mês</h3><p>Uma referência manual para comparar com sua projeção. Esses campos não mudam as metas reais do aplicativo.</p></div><span class="sim-cenario-tag">Editável</span></div>
-    <div class="sim-cenario-grid">
-      <div><label>KM no mês</label><input type="text" id="simMetaKm" inputmode="decimal" placeholder="Ex: 3.800"></div>
-      <div><label>Receita no mês</label><input type="text" id="simMetaReceita" inputmode="decimal" placeholder="R$ 0,00"></div>
+    <div class="config-section-head"><div><h3>O que quero alcançar</h3><p>Informe seus custos e o lucro líquido desejado. As metas abaixo se ajustam aos dias que você marcou.</p></div></div>
+    <div class="sim-cenario-grid sim-cenario-objetivos">
       <div><label>Custos essenciais</label><input type="text" id="simCustos" inputmode="decimal" placeholder="R$ 0,00"></div>
-      <div><label>Retirada desejada</label><input type="text" id="simRetirada" inputmode="decimal" placeholder="R$ 0,00"></div>
-      <div><label>Adicional de conforto</label><input type="text" id="simConforto" inputmode="decimal" placeholder="R$ 0,00"></div>
+      <div><label>Lucro líquido desejado</label><input type="text" id="simRetirada" inputmode="decimal" placeholder="R$ 0,00"></div>
+      <div><label>Extra de conforto</label><input type="text" id="simConforto" inputmode="decimal" placeholder="R$ 0,00"></div>
     </div>
-    <div class="sim-cenario-calculos"><span>Receita/KM <strong id="simCenarioReceitaKm">—</strong></span><span>Custo/KM <strong id="simCenarioCustoKm">—</strong></span><span>Resultado estimado <strong id="simCenarioResultado">R$ 0,00</strong></span></div>
   </div>
 
-  <div class="sim-metas-grid">
-    <section class="sim-meta sim-meta-sobrevivencia"><span>Sobrevivência</span><strong id="simMetaSobrevivencia">R$ 0,00</strong><p id="simNecessarioSobrevivencia">R$ 0,00/dia para cobrir os custos</p></section>
-    <section class="sim-meta sim-meta-estabilidade"><span>Estabilidade</span><strong id="simMetaEstabilidade">R$ 0,00</strong><p id="simNecessarioEstabilidade">R$ 0,00/dia para chegar lá</p></section>
-    <section class="sim-meta sim-meta-conforto"><span>Conforto</span><strong id="simMetaConforto">R$ 0,00</strong><p id="simNecessarioConforto">R$ 0,00/dia para chegar lá</p></section>
+  <div class="sim-planejamento-head"><div><h3>Metas do seu plano</h3><p>O faturamento e a quilometragem necessários para o mês planejado.</p></div><strong id="simDiasPlanejadosPlano">0 dias</strong></div>
+  <div class="sim-metas-grid sim-metas-planejamento">
+    <section class="sim-meta sim-meta-sobrevivencia"><span>Sobrevivência</span><strong id="simMetaSobrevivencia">R$ 0,00</strong><p>Cobrir os custos da operação.</p><div class="sim-meta-detalhes"><span id="simSobrevivenciaDia">R$ 0,00/dia</span><span id="simSobrevivenciaKm">0 km/dia</span><span id="simSobrevivenciaCustoKm">R$ 0,00 custo/km</span></div></section>
+    <section class="sim-meta sim-meta-estabilidade"><span>Estabilidade</span><strong id="simMetaEstabilidade">R$ 0,00</strong><p>Custos mais o lucro líquido desejado.</p><div class="sim-meta-detalhes"><span id="simEstabilidadeDia">R$ 0,00/dia</span><span id="simEstabilidadeKm">0 km/dia</span><span id="simEstabilidadeCustoKm">R$ 0,00 custo/km</span></div></section>
+    <section class="sim-meta sim-meta-conforto"><span>Conforto</span><strong id="simMetaConforto">R$ 0,00</strong><p>Estabilidade mais o extra desejado.</p><div class="sim-meta-detalhes"><span id="simConfortoDia">R$ 0,00/dia</span><span id="simConfortoKm">0 km/dia</span><span id="simConfortoCustoKm">R$ 0,00 custo/km</span></div></section>
   </div>
 </div>
 
@@ -509,7 +493,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="app.js?v=20260929-planejamento-projecoes"></script>
+<script src="app.js?v=20260929-planejamento-mensal"></script>
 
 </div>
 </body>
