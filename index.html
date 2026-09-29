@@ -7,7 +7,7 @@
 <title>Controle Uber</title>
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="styles.css?v=20260929-planejamento-mensal">
+<link rel="stylesheet" href="styles.css?v=20260929-planejamento-base">
 </head>
 
 <body>
@@ -280,31 +280,28 @@
     <div class="simulation-period"><label>Mês planejado</label><select id="simMes"></select><label>Ano</label><select id="simAno"></select></div>
   </div>
 
-  <div class="card sim-base-card">
-    <div class="config-section-head"><div><h3>Ponto de partida</h3><p>Escolha uma referência. O valor por KM pode ser ajustado para este estudo.</p></div></div>
-    <div class="sim-referencia-grid">
-      <div><label>Usar dados de</label><select id="simReferencia"><option value="mes-atual">Mês atual até hoje</option><option value="mes-especifico">Um mês específico</option><option value="periodo">Período personalizado</option></select></div>
-      <div class="sim-referencia-mes hidden"><label>Mês</label><select id="simRefMes"></select></div>
-      <div class="sim-referencia-mes hidden"><label>Ano</label><select id="simRefAno"></select></div>
-      <div class="sim-referencia-periodo hidden"><label>Data inicial</label><input type="date" id="simRefInicio"></div>
-      <div class="sim-referencia-periodo hidden"><label>Data final</label><input type="date" id="simRefFim"></div>
-    </div>
-    <div class="sim-base-estudo">
-      <div class="sim-metricas-base">
-        <div><span>Dias trabalhados</span><strong id="simBaseDias">—</strong></div>
-        <div><span>Receita/dia</span><strong id="simBaseReceitaDia">—</strong></div>
-        <div><span>KM/dia</span><strong id="simBaseKmDia">—</strong></div>
-        <div><span>Custo/KM</span><strong id="simBaseCustoKm">—</strong></div>
-      </div>
-      <div class="sim-receita-km"><label>Receita por KM usada no plano</label><input type="text" id="simReceitaKm" inputmode="decimal" placeholder="R$ 0,00"><small>Preenchida pela referência; ajuste se espera uma média diferente.</small></div>
-    </div>
-  </div>
-
   <div class="card">
     <div class="config-section-head"><div><h3>Dias que vou trabalhar</h3><p>Monte a rotina do mês planejado. Toque em uma data para marcar trabalho ou folga.</p></div><strong id="simRotinaResumo">0 dias planejados</strong></div>
     <div class="rotina-semana" id="simRotinaSemana" aria-label="Dias habituais de trabalho na simulação"><button type="button" data-sim-weekday="7">Dom</button><button type="button" data-sim-weekday="1">Seg</button><button type="button" data-sim-weekday="2">Ter</button><button type="button" data-sim-weekday="3">Qua</button><button type="button" data-sim-weekday="4">Qui</button><button type="button" data-sim-weekday="5">Sex</button><button type="button" data-sim-weekday="6">Sáb</button></div>
     <label class="toggle-linha"><input type="checkbox" id="simTrabalhoEmFeriados"> <span>Também trabalhar nos feriados nacionais</span></label>
     <div class="calendario-rotina sim-calendario"><div class="calendario-semana-labels"><span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span></div><div class="calendario-rotina-grid" id="simCalendario"></div></div>
+  </div>
+
+  <div class="card sim-base-card">
+    <div class="config-section-head"><div><h3>Ponto de partida</h3><p>Filtre os lançamentos que quer usar como base para o planejamento.</p></div></div>
+    <div class="sim-referencia-grid sim-filtro-datas">
+      <div><label>Data inicial</label><input type="date" id="simRefInicio"></div>
+      <div><label>Data final</label><input type="date" id="simRefFim"></div>
+    </div>
+    <div class="sim-metricas-base">
+      <div><span>Ganhos totais</span><strong id="simBaseGanhos">—</strong></div>
+      <div><span>Custos totais</span><strong id="simBaseCustos">—</strong></div>
+      <div><span>Dias trabalhados</span><strong id="simBaseDias">—</strong></div>
+      <div><span>Receita/dia</span><strong id="simBaseReceitaDia">—</strong></div>
+      <div><span>KM/dia</span><strong id="simBaseKmDia">—</strong></div>
+      <div><span>Custo/KM</span><strong id="simBaseCustoKm">—</strong></div>
+      <div><span>Receita/KM</span><strong id="simBaseReceitaKm">—</strong></div>
+    </div>
   </div>
 
   <div class="card sim-cenario-card">
@@ -493,7 +490,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="app.js?v=20260929-planejamento-mensal"></script>
+<script src="app.js?v=20260929-planejamento-base"></script>
 
 </div>
 </body>

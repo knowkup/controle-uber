@@ -600,8 +600,9 @@ button.perigo {
 .sim-meta-conforto { --sim-color: #2f74b5; --sim-bg: #eef6ff; --sim-border: #c9ddf2; }
 .sim-base-card { margin-bottom: 14px; }
 .sim-referencia-grid { display: grid; grid-template-columns: minmax(220px, 1.4fr) repeat(2, minmax(120px, .7fr)); gap: 10px; align-items: end; }
+.sim-filtro-datas { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 560px; }
 .sim-referencia-periodo { min-width: 0; }
-.sim-metricas-base { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px; margin-top: 16px; border: 1px solid #dde8df; border-radius: 12px; overflow: hidden; background: #dde8df; }
+.sim-metricas-base { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1px; margin-top: 16px; border: 1px solid #dde8df; border-radius: 12px; overflow: hidden; background: #dde8df; }
 .sim-metricas-base > div { min-width: 0; padding: 12px 11px; background: #fbfdfb; }
 .sim-metricas-base span, .sim-metricas-base strong { display: block; }
 .sim-metricas-base span { color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .35px; }

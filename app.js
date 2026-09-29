@@ -935,7 +935,7 @@ function renderizarMetasConfig() {
   });
 }
 if (document.getElementById("simMes")) {
-  ["simReceitaKm", "simCustos", "simRetirada", "simConforto"].forEach(id => {
+  ["simCustos", "simRetirada", "simConforto"].forEach(id => {
     const campo = document.getElementById(id);
     campo.addEventListener("input", event => {
       formatarCampoMoedaDigitando(event.target);
@@ -948,7 +948,7 @@ if (document.getElementById("simMes")) {
   });
   document.getElementById("simMes").addEventListener("change", atualizarPeriodoSimulacao);
   document.getElementById("simAno").addEventListener("change", atualizarPeriodoSimulacao);
-  ["simReferencia", "simRefMes", "simRefAno", "simRefInicio", "simRefFim"].forEach(id => {
+  ["simRefInicio", "simRefFim"].forEach(id => {
     document.getElementById(id).addEventListener("change", atualizarReferenciaSimulacao);
   });
   document.getElementById("simTrabalhoEmFeriados").addEventListener("change", event => {
@@ -2062,30 +2062,18 @@ function calcularMetricasDoPeriodo(dataInicio, dataFim) {
 
 function intervaloReferenciaSimulacao() {
   garantirSimulacao();
-  const hoje = new Date();
-  if (simulacao.referencia === "mes-especifico") {
-    const inicio = dataISOCalendario(simulacao.refAno, simulacao.refMes, 1);
-    const fim = dataISOCalendario(simulacao.refAno, simulacao.refMes, new Date(simulacao.refAno, simulacao.refMes, 0).getDate());
-    return { inicio, fim };
-  }
-  if (simulacao.referencia === "periodo") {
-    return { inicio: simulacao.refInicio, fim: simulacao.refFim };
-  }
-  return {
-    inicio: dataISOCalendario(hoje.getFullYear(), hoje.getMonth() + 1, 1),
-    fim: dataISODeData(hoje)
-  };
+  return { inicio: simulacao.refInicio, fim: simulacao.refFim };
 }
 
 function preencherOpcoesSimulacao() {
   const hoje = new Date();
   const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
   const anos = Array.from({ length: 7 }, (_, indice) => hoje.getFullYear() - 1 + indice);
-  ["simMes", "simRefMes"].forEach(id => {
+  ["simMes"].forEach(id => {
     const campo = document.getElementById(id);
     if (campo) campo.innerHTML = meses.map((nome, indice) => `<option value="${indice + 1}">${nome}</option>`).join("");
   });
-  ["simAno", "simRefAno"].forEach(id => {
+  ["simAno"].forEach(id => {
     const campo = document.getElementById(id);
     if (campo) campo.innerHTML = anos.map(ano => `<option value="${ano}">${ano}</option>`).join("");
   });
@@ -2096,20 +2084,16 @@ function garantirSimulacao() {
   const hoje = new Date();
   const totais = totaisMetasConfig(config);
   const inicioMes = dataISOCalendario(hoje.getFullYear(), hoje.getMonth() + 1, 1);
-  const metricasBase = calcularMetricasDoPeriodo(inicioMes, dataISODeData(hoje));
+  const mesPlanejado = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
   simulacao = {
-    ano: hoje.getFullYear(),
-    mes: hoje.getMonth() + 1,
+    ano: mesPlanejado.getFullYear(),
+    mes: mesPlanejado.getMonth() + 1,
     diasSemana: [...(config.diasSemana || [])],
     trabalhoEmFeriados: !!config.trabalhoEmFeriados,
     diasFolgaExtra: [...(config.diasFolgaExtra || [])],
     diasTrabalhoExtra: [...(config.diasTrabalhoExtra || [])],
-    referencia: "mes-atual",
-    refMes: hoje.getMonth() + 1,
-    refAno: hoje.getFullYear(),
     refInicio: inicioMes,
     refFim: dataISODeData(hoje),
-    receitaKm: metricasBase.receitaKm,
     custos: totais.sobrevivencia,
     retirada: Math.max(totais.estabilidade - totais.sobrevivencia, 0),
     conforto: Math.max(totais.conforto - totais.estabilidade, 0)
@@ -2118,11 +2102,8 @@ function garantirSimulacao() {
   preencherOpcoesSimulacao();
   simMes.value = String(simulacao.mes);
   simAno.value = String(simulacao.ano);
-  simRefMes.value = String(simulacao.refMes);
-  simRefAno.value = String(simulacao.refAno);
   simRefInicio.value = simulacao.refInicio;
   simRefFim.value = simulacao.refFim;
-  simReceitaKm.value = simulacao.receitaKm ? moeda(simulacao.receitaKm) : "";
   simCustos.value = simulacao.custos ? moeda(simulacao.custos) : "";
   simRetirada.value = simulacao.retirada ? moeda(simulacao.retirada) : "";
   simConforto.value = simulacao.conforto ? moeda(simulacao.conforto) : "";
@@ -2150,21 +2131,13 @@ function atualizarPeriodoSimulacao() {
 
 function atualizarReferenciaSimulacao() {
   garantirSimulacao();
-  simulacao.referencia = simReferencia.value;
-  simulacao.refMes = Number(simRefMes.value) || simulacao.refMes;
-  simulacao.refAno = Number(simRefAno.value) || simulacao.refAno;
   simulacao.refInicio = simRefInicio.value || simulacao.refInicio;
   simulacao.refFim = simRefFim.value || simulacao.refFim;
-  document.querySelectorAll(".sim-referencia-mes").forEach(elemento => elemento.classList.toggle("hidden", simulacao.referencia !== "mes-especifico"));
-  document.querySelectorAll(".sim-referencia-periodo").forEach(elemento => elemento.classList.toggle("hidden", simulacao.referencia !== "periodo"));
-  const intervalo = intervaloReferenciaSimulacao();
-  simulacao.receitaKm = calcularMetricasDoPeriodo(intervalo.inicio, intervalo.fim).receitaKm;
   renderizarSimulacao();
 }
 
 function atualizarValoresSimulacao() {
   garantirSimulacao();
-  simulacao.receitaKm = parseMoeda(simReceitaKm.value);
   simulacao.custos = parseMoeda(simCustos.value);
   simulacao.retirada = parseMoeda(simRetirada.value);
   simulacao.conforto = parseMoeda(simConforto.value);
@@ -2253,23 +2226,20 @@ function renderizarSimulacao() {
   const estabilidade = sobrevivencia + simulacao.retirada;
   const conforto = estabilidade + simulacao.conforto;
 
-  simReferencia.value = simulacao.referencia;
-  simRefMes.value = String(simulacao.refMes);
-  simRefAno.value = String(simulacao.refAno);
   simRefInicio.value = simulacao.refInicio;
   simRefFim.value = simulacao.refFim;
-  document.querySelectorAll(".sim-referencia-mes").forEach(elemento => elemento.classList.toggle("hidden", simulacao.referencia !== "mes-especifico"));
-  document.querySelectorAll(".sim-referencia-periodo").forEach(elemento => elemento.classList.toggle("hidden", simulacao.referencia !== "periodo"));
+  simBaseGanhos.innerText = moeda(metricasBase.receita);
+  simBaseCustos.innerText = moeda(metricasBase.custos);
   simBaseDias.innerText = metricasBase.diasTrabalhados ? `${metricasBase.diasTrabalhados} dias` : "—";
   simBaseReceitaDia.innerText = metricasBase.receitaDia ? moeda(metricasBase.receitaDia) : "—";
   simBaseKmDia.innerText = metricasBase.kmDia ? `${Math.round(metricasBase.kmDia)} km` : "—";
   simBaseCustoKm.innerText = metricasBase.custoKm ? moeda(metricasBase.custoKm) : "—";
-  simReceitaKm.value = simulacao.receitaKm ? moeda(simulacao.receitaKm) : "";
+  simBaseReceitaKm.innerText = metricasBase.receitaKm ? moeda(metricasBase.receitaKm) : "—";
   simRotinaResumo.innerText = `${diasPlanejados} dias planejados`;
   simDiasPlanejadosPlano.innerText = `${diasPlanejados} dias`;
-  atualizarMetaPlanejada("Sobrevivencia", sobrevivencia, diasPlanejados, simulacao.receitaKm, simulacao.custos);
-  atualizarMetaPlanejada("Estabilidade", estabilidade, diasPlanejados, simulacao.receitaKm, simulacao.custos);
-  atualizarMetaPlanejada("Conforto", conforto, diasPlanejados, simulacao.receitaKm, simulacao.custos);
+  atualizarMetaPlanejada("Sobrevivencia", sobrevivencia, diasPlanejados, metricasBase.receitaKm, simulacao.custos);
+  atualizarMetaPlanejada("Estabilidade", estabilidade, diasPlanejados, metricasBase.receitaKm, simulacao.custos);
+  atualizarMetaPlanejada("Conforto", conforto, diasPlanejados, metricasBase.receitaKm, simulacao.custos);
 
   document.querySelectorAll("[data-sim-weekday]").forEach(botao => {
     botao.classList.toggle("ativo", simulacao.diasSemana.includes(Number(botao.dataset.simWeekday)));
