@@ -598,6 +598,32 @@ button.perigo {
 .sim-meta-sobrevivencia { --sim-color: #159447; --sim-bg: #eef9f1; --sim-border: #c9ead2; }
 .sim-meta-estabilidade { --sim-color: #b66600; --sim-bg: #fff6e8; --sim-border: #f4d7aa; }
 .sim-meta-conforto { --sim-color: #2f74b5; --sim-bg: #eef6ff; --sim-border: #c9ddf2; }
+.sim-base-card { margin-bottom: 14px; }
+.sim-referencia-grid { display: grid; grid-template-columns: minmax(220px, 1.4fr) repeat(2, minmax(120px, .7fr)); gap: 10px; align-items: end; }
+.sim-referencia-periodo { min-width: 0; }
+.sim-metricas-base { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px; margin-top: 16px; border: 1px solid #dde8df; border-radius: 12px; overflow: hidden; background: #dde8df; }
+.sim-metricas-base > div { min-width: 0; padding: 12px 11px; background: #fbfdfb; }
+.sim-metricas-base span, .sim-metricas-base strong { display: block; }
+.sim-metricas-base span { color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .35px; }
+.sim-metricas-base strong { margin-top: 5px; color: var(--text); font-size: 15px; white-space: nowrap; }
+.sim-projecao-grid { margin-bottom: 14px; }
+.sim-previsao-card { border-color: #bfe2ca; background: linear-gradient(145deg, #f2faf4, #e7f5ea); }
+.sim-previsao-head { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; }
+.sim-modo { display: flex; flex: none; gap: 3px; padding: 3px; border: 1px solid #c9dfce; border-radius: 10px; background: rgba(255,255,255,.7); }
+.sim-modo button { width: auto; margin: 0; padding: 7px 9px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); font-size: 11px; white-space: nowrap; }
+.sim-modo button.ativo { background: #fff; color: #146c37; box-shadow: 0 1px 4px rgba(31, 87, 46, .13); }
+.sim-realizado { display: grid; grid-template-columns: 1fr auto; gap: 3px 12px; align-items: baseline; margin: 14px 0 2px; padding: 11px 0; border-top: 1px solid rgba(21, 148, 71, .18); border-bottom: 1px solid rgba(21, 148, 71, .18); }
+.sim-realizado span, .sim-realizado small { color: var(--muted); font-size: 11px; }
+.sim-realizado strong { color: #146c37; font-size: 17px; }
+.sim-realizado small { grid-column: 1 / -1; }
+.sim-previsao-valores { margin-top: 13px; }
+.sim-cenario-card { margin: 14px 0; }
+.sim-cenario-tag { padding: 5px 9px; border-radius: 999px; background: #eaf3fb; color: #246499; font-size: 11px; font-weight: 800; }
+.sim-cenario-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-top: 13px; }
+.sim-cenario-grid label { font-size: 11px; }
+.sim-cenario-calculos { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 14px; padding-top: 13px; border-top: 1px solid #e1e9e2; }
+.sim-cenario-calculos span { color: var(--muted); font-size: 12px; }
+.sim-cenario-calculos strong { margin-left: 5px; color: var(--text); font-size: 13px; }
 
 .semana-melhor-dia {
   margin-top: 11px;
@@ -2000,7 +2026,8 @@ input[type="date"] {
   .resumo-grid { grid-template-columns:1fr 1fr; }
   .resumo-grid .resumo-item:has(#resultado) { grid-column:1 / -1; }
   .operacao-grid { grid-template-columns:1fr; }
-  .simulation-grid, .sim-valores-grid, .sim-metas-grid { grid-template-columns: 1fr; }
+  .simulation-grid, .sim-valores-grid, .sim-metas-grid, .sim-referencia-grid, .sim-cenario-grid { grid-template-columns: 1fr; }
+  .sim-metricas-base { grid-template-columns: 1fr 1fr; }
   .botoes { grid-template-columns: 1fr 1fr; }
   .operacao-mini-grid { grid-template-columns: 1fr 1fr; }
   table { font-size: 12px; }
@@ -2018,6 +2045,12 @@ input[type="date"] {
   .simulation-hero { flex-direction: column; align-items: stretch; }
 
   .simulation-period { min-width: 0; }
+
+  .sim-previsao-head { flex-direction: column; }
+
+  .sim-modo { width: 100%; }
+
+  .sim-modo button { flex: 1; }
 
   .config-section-head strong { white-space: normal; }
 
