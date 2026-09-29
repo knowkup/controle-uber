@@ -7,7 +7,7 @@
 <title>Controle Uber</title>
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="styles.css?v=20260929-planejamento-base">
+<link rel="stylesheet" href="styles.css?v=20260929-planejamento-cenario">
 </head>
 
 <body>
@@ -304,6 +304,19 @@
     </div>
   </div>
 
+  <div class="card sim-cenario-card sim-meu-cenario">
+    <div class="config-section-head"><div><h3>Meu cenário</h3><p>Teste uma receita por dia diferente. Os demais valores usam as médias do ponto de partida.</p></div></div>
+    <div class="sim-cenario-grid sim-cenario-receita">
+      <div><label>Receita/dia planejada</label><input type="text" id="simReceitaDia" inputmode="decimal" placeholder="R$ 0,00"></div>
+    </div>
+    <div class="sim-cenario-calculos sim-cenario-resultado">
+      <div><span>Receita no mês</span><strong id="simCenarioReceitaMes">—</strong></div>
+      <div><span>KM estimados</span><strong id="simCenarioKmMes">—</strong></div>
+      <div><span>Custo estimado</span><strong id="simCenarioCustoMes">—</strong></div>
+      <div><span>Lucro líquido estimado</span><strong id="simCenarioLucroMes">—</strong></div>
+    </div>
+  </div>
+
   <div class="card sim-cenario-card">
     <div class="config-section-head"><div><h3>O que quero alcançar</h3><p>Informe seus custos e o lucro líquido desejado. As metas abaixo se ajustam aos dias que você marcou.</p></div></div>
     <div class="sim-cenario-grid sim-cenario-objetivos">
@@ -490,7 +503,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="app.js?v=20260929-planejamento-base"></script>
+<script src="app.js?v=20260929-planejamento-cenario"></script>
 
 </div>
 </body>
