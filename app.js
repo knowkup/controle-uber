@@ -859,6 +859,29 @@ function renderizarCombustivel() {
   lista.innerHTML = itens.map(d => `<tr><td data-label="Data">${formatarData(d.data)}</td><td data-label="Litros">${numero(d.litros)}</td><td data-label="Valor" class="negativo">${moedaSaida(-Math.abs(d.valor))}</td><td data-label="Preço/L">${moeda(Math.abs(d.valor) / d.litros)}</td><td data-label="KM">${d.km || "—"}</td></tr>`).join("");
 }
 
+function ehCustoFixoOuParcelamento(meta) {
+  const nome = chaveMeta(meta?.nome);
+  return nome.includes("parcela") || nome.includes("custo fixo") || nome === "custos gerais";
+}
+
+function agruparMetasDoControleMensal(metas) {
+  const itensParaSomar = metas.filter(ehCustoFixoOuParcelamento);
+  if (itensParaSomar.length < 2) return metas.map(meta => ({ nome: meta.nome, metas: [meta] }));
+
+  let grupoInserido = false;
+  return metas.reduce((resultado, meta) => {
+    if (!ehCustoFixoOuParcelamento(meta)) {
+      resultado.push({ nome: meta.nome, metas: [meta] });
+      return resultado;
+    }
+    if (!grupoInserido) {
+      resultado.push({ nome: "Custos fixos e parcelamentos", metas: itensParaSomar });
+      grupoInserido = true;
+    }
+    return resultado;
+  }, []);
+}
+
 function renderizarComposicaoMetas(ctx) {
   const container = document.getElementById("composicaoMetasLista");
   if (!container) return;
@@ -873,21 +896,22 @@ function renderizarComposicaoMetas(ctx) {
   container.innerHTML = grupos.map(objetivo => {
     const metasDoGrupo = config.metas.filter(meta => objetivoMetaSeguro(meta.objetivo) === objetivo);
     if (!metasDoGrupo.length) return "";
+    const itensDoGrupo = agruparMetasDoControleMensal(metasDoGrupo);
 
     return `
       <section class="composicao-grupo composicao-${objetivo}">
         <div class="composicao-grupo-titulo">${Number(config.modeloMetasVersao) >= 2 ? "Custos que compõem a Sobrevivência" : rotuloObjetivoMeta(objetivo)}</div>
         <div class="composicao-itens">
-          ${metasDoGrupo.map(meta => {
-            const valorMeta = Number(meta.valor) || 0;
-            const realizado = valorRealizadoMeta(meta, ctx);
+          ${itensDoGrupo.map(item => {
+            const valorMeta = item.metas.reduce((soma, meta) => soma + (Number(meta.valor) || 0), 0);
+            const realizado = item.metas.reduce((soma, meta) => soma + valorRealizadoMeta(meta, ctx), 0);
             const saldo = valorMeta - realizado;
             const sobraAtual = Math.max((Number(ctx.entradas) || 0) + (Number(ctx.saidas) || 0), 0);
             const saldoSobra = Math.max(valorMeta - sobraAtual, 0);
-            const ehSobra = ehMetaSobra(meta);
+            const ehSobra = item.metas.every(ehMetaSobra);
             return `
               <div class="composicao-item ${ehSobra ? "meta-sobra" : ""}">
-                <strong>${textoSeguro(meta.nome)}</strong>
+                <strong>${textoSeguro(item.nome)}</strong>
                 <div class="composicao-valores">
                   <span class="${ehSobra ? "" : "custo-planejado"}"><small>${ehSobra ? "Desejado" : "Definido"}</small>${moeda(valorMeta)}</span>
                   <span><small>${ehSobra ? "A formar" : "Saldo"}</small>${moeda(ehSobra ? saldoSobra : saldo)}</span>
