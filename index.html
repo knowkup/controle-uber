@@ -237,13 +237,20 @@
     <div class="dashboard-grid-2">
       <div class="kpi-card kpi-media">
         <span>Média atual</span>
-        <strong id="dashMediaDia">R$ 0,00</strong>
-        <p id="dashMediaSub">por dia trabalhado</p>
+        <div class="ritmo-valores" id="dashMediaDia">
+          <div><span>Seg&#8211;sex</span><strong id="dashMediaSemana">R$ 0,00</strong></div>
+          <div><span>Dia especial</span><strong id="dashMediaEspecial">R$ 0,00</strong></div>
+        </div>
+        <p id="dashMediaSub">sem ganhos registrados</p>
       </div>
       <div class="kpi-card kpi-proxima">
         <span id="dashProximaMetaLabel">Para alcançar estabilidade</span>
         <strong id="dashMetaAjustada"><span class="daily-value">R$ 0,00</span><span class="daily-unit">/dia</span></strong>
-        <p>por dia restante planejado</p>
+        <div class="ritmo-detalhes">
+          <span>Seg&#8211;sex <strong id="dashMetaSemana">R$ 0,00</strong></span>
+          <span>Dia especial <strong id="dashMetaEspecial">R$ 0,00</strong></span>
+        </div>
+        <p id="dashMetaSub">por dia restante planejado</p>
       </div>
     </div>
   </div>

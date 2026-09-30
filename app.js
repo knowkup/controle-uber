@@ -38,6 +38,7 @@ const STORAGE_KEY = "controleUberFelipe";
 const CONFIG_KEY = "controleUberFelipeConfig";
 const HISTORICO_KEY = "controleUberFelipeFechamentos";
 const CATEGORIAS_DESPESA_PADRAO = ["Seguro", "Manutenção", "Lavagem", "Parcela", "Outros"];
+const PESO_DIA_ESPECIAL = 1.5;
 let firebaseCarregado = false;
 let salvandoFirebase = false;
 let bloqueiaRestauracaoLocal = false;
@@ -679,6 +680,7 @@ function render() {
   const despesasPorDescricao = {};
 
   const diasComGanhos = new Set();
+  const ganhosUberPorDia = {};
 
   const dadosOrdenados = [...dados].sort((a, b) => {
     const dataA = a.data || "";
@@ -695,7 +697,10 @@ function render() {
     if (obterMesKey(d.data) === mesAtualKey && !snapMesFechado) {
       if (d.valor > 0) {
         entradas += d.valor;
-        if (d.descricao === "Ganhos Uber") diasComGanhos.add(d.data);
+        if (d.descricao === "Ganhos Uber") {
+          diasComGanhos.add(d.data);
+          ganhosUberPorDia[d.data] = (ganhosUberPorDia[d.data] || 0) + d.valor;
+        }
       }
 
       if (d.valor < 0) saidas += d.valor;
@@ -760,6 +765,14 @@ function render() {
   const diasPlanejadosAtual = calcularDiasPlanejadosDoMes(new Date().getFullYear(), new Date().getMonth() + 1, config);
   const diasTrabalhadosValor = snapMesFechado ? 0 : diasComGanhos.size;
   const diasRestantes = snapMesFechado ? 0 : Math.max(diasPlanejadosAtual - diasTrabalhadosValor, 0);
+  const ritmoPorTipo = calcularRitmoPorTipo(
+    new Date().getFullYear(),
+    new Date().getMonth() + 1,
+    ganhosUberPorDia,
+    config,
+    diasPlanejadosAtual,
+    !!snapMesFechado
+  );
 
   const mediaDiaValor = diasTrabalhadosValor > 0 ? entradas / diasTrabalhadosValor : 0;
   const metaMinima = diasPlanejadosAtual > 0 ? custosSemParcela / diasPlanejadosAtual : 0;
@@ -807,6 +820,7 @@ function render() {
     diasPlanejadosAtual,
     mediaDiaValor,
     metaAjustadaValor,
+    ritmoPorTipo,
     snapMesFechado
   });
 
@@ -1495,6 +1509,7 @@ function atualizarDashboard(ctx) {
   const diasRestantes = ctx.diasRestantes || 0;
   const diasPlanejadosAtual = ctx.diasPlanejadosAtual || 0;
   const mediaDiaValor = ctx.mediaDiaValor || 0;
+  const ritmoPorTipo = ctx.ritmoPorTipo || criarRitmoVazio();
 
   const metaConsistenteOriginal = totaisMetasConfig().estabilidade;
   const custosBaseSobra = totaisCustosConfig().sobrevivencia;
@@ -1550,16 +1565,29 @@ function atualizarDashboard(ctx) {
   atualizarMetaCard("Consistente", "Estabilidade", metaConsistenteOriginal, estabilidadeAtualizada, entradas, diasRestantes);
   atualizarMetaCard("Ideal", "Conforto", custosTotais, confortoAtualizado, entradas, diasRestantes);
 
-  dashMediaDia.innerText = moeda(mediaDiaValor);
-  dashMediaSub.innerText = diasTrabalhadosValor > 0 ? `${diasTrabalhadosValor} dia(s) trabalhado(s)` : "sem ganhos registrados";
+  dashMediaSemana.innerText = ritmoPorTipo.diasNormaisComGanhos ? moeda(ritmoPorTipo.mediaNormal) : "-";
+  dashMediaEspecial.innerText = ritmoPorTipo.diasEspeciaisComGanhos ? moeda(ritmoPorTipo.mediaEspecial) : "-";
+  dashMediaSub.innerText = ritmoPorTipo.totalDiasComGanhos
+    ? `${ritmoPorTipo.diasNormaisComGanhos} dia(s) seg\u2013sex \u00b7 ${ritmoPorTipo.diasEspeciaisComGanhos} dia(s) especial(is)`
+    : "sem ganhos registrados";
   const proximaMeta = proximaMetaAtiva(entradas, sobrevivenciaAtualizada, estabilidadeAtualizada, confortoAtualizado);
   const metaAjustadaCard = dashMetaAjustada.closest(".kpi-card");
   if (proximaMeta) {
-    const valorDiaNecessario = diasRestantes > 0 ? Math.max((proximaMeta.valor - entradas) / diasRestantes, 0) : 0;
+    const faltaMeta = Math.max(proximaMeta.valor - entradas, 0);
+    const valorDiaNecessario = ritmoPorTipo.unidadesRestantes > 0
+      ? faltaMeta / ritmoPorTipo.unidadesRestantes
+      : (diasRestantes > 0 ? faltaMeta / diasRestantes : 0);
+    const valorDiaEspecial = valorDiaNecessario * ritmoPorTipo.pesoEspecial;
+    const proximoDiaEspecial = ritmoPorTipo.proximoDia?.especial || false;
     metaAjustadaCard.style.display = "";
     dashProximaMetaLabel.innerText = proximaMeta.acao;
-    dashMetaAjustada.innerHTML = `<span class="daily-value">${moeda(valorDiaNecessario)}</span><span class="daily-unit">/dia</span>`;
-    dashMetaAjustada.parentElement.querySelector("p").innerText = `${proximaMeta.nome} · ${diasRestantes} dia(s) restantes`;
+    dashMetaAjustada.innerHTML = `<span class="daily-value">${moeda(proximoDiaEspecial ? valorDiaEspecial : valorDiaNecessario)}</span><span class="daily-unit">/dia</span>`;
+    dashMetaSemana.innerText = moeda(valorDiaNecessario);
+    dashMetaEspecial.innerText = moeda(valorDiaEspecial);
+    const textoProximoDia = ritmoPorTipo.proximoDia
+      ? `Pr\u00f3ximo dia: ${ritmoPorTipo.proximoDia.rotulo}${proximoDiaEspecial ? " \u00b7 dia especial" : ""}`
+      : `${proximaMeta.nome} \u00b7 ${diasRestantes} dia(s) restantes`;
+    dashMetaSub.innerText = textoProximoDia;
   } else {
     metaAjustadaCard.style.display = "none";
   }
@@ -1921,6 +1949,90 @@ function diaEhTrabalho(data, configBase = config) {
   if (configBase.diasFolgaExtra.includes(dataISO)) trabalha = false;
   if (configBase.diasTrabalhoExtra.includes(dataISO)) trabalha = true;
   return trabalha;
+}
+
+function criarRitmoVazio() {
+  return {
+    pesoEspecial: PESO_DIA_ESPECIAL,
+    diasNormaisComGanhos: 0,
+    diasEspeciaisComGanhos: 0,
+    mediaNormal: 0,
+    mediaEspecial: 0,
+    totalDiasComGanhos: 0,
+    diasNormaisRestantes: 0,
+    diasEspeciaisRestantes: 0,
+    unidadesRestantes: 0,
+    proximoDia: null
+  };
+}
+
+function dataDeISO(dataISO) {
+  const partes = String(dataISO || "").split("-").map(Number);
+  if (partes.length !== 3 || partes.some(Number.isNaN)) return null;
+  return new Date(partes[0], partes[1] - 1, partes[2]);
+}
+
+function diaEhEspecial(data) {
+  const dataISO = dataISOCalendario(data.getFullYear(), data.getMonth() + 1, data.getDate());
+  return data.getDay() === 0 || data.getDay() === 6 || feriadosNacionais(data.getFullYear()).has(dataISO);
+}
+
+function rotuloDoDiaRitmo(data) {
+  const nomes = ["Domingo", "Segunda", "Terca", "Quarta", "Quinta", "Sexta", "Sabado"];
+  const dataISO = dataISOCalendario(data.getFullYear(), data.getMonth() + 1, data.getDate());
+  const hoje = new Date();
+  const hojeISO = dataISOCalendario(hoje.getFullYear(), hoje.getMonth() + 1, hoje.getDate());
+  if (dataISO === hojeISO) return "Hoje";
+  return `${nomes[data.getDay()]} (${String(data.getDate()).padStart(2, "0")}/${String(data.getMonth() + 1).padStart(2, "0")})`;
+}
+
+function proximoDiaPlanejado(ano, mes, ganhosPorDia, configBase = config) {
+  if (!rotinaConfigurada(configBase)) return null;
+  const hoje = new Date();
+  const inicio = ano === hoje.getFullYear() && mes === hoje.getMonth() + 1 ? hoje.getDate() : 1;
+  const ultimoDia = new Date(ano, mes, 0).getDate();
+  for (let dia = inicio; dia <= ultimoDia; dia++) {
+    const data = new Date(ano, mes - 1, dia);
+    const dataISO = dataISOCalendario(ano, mes, dia);
+    if (!diaEhTrabalho(data, configBase) || ganhosPorDia[dataISO]) continue;
+    return { especial: diaEhEspecial(data), rotulo: rotuloDoDiaRitmo(data) };
+  }
+  return null;
+}
+
+function calcularRitmoPorTipo(ano, mes, ganhosPorDia, configBase, diasPlanejados, mesFechado) {
+  const ritmo = criarRitmoVazio();
+  if (mesFechado) return ritmo;
+  for (const [dataISO, valor] of Object.entries(ganhosPorDia)) {
+    const data = dataDeISO(dataISO);
+    if (!data) continue;
+    if (diaEhEspecial(data)) {
+      ritmo.diasEspeciaisComGanhos++;
+      ritmo.mediaEspecial += Number(valor) || 0;
+    } else {
+      ritmo.diasNormaisComGanhos++;
+      ritmo.mediaNormal += Number(valor) || 0;
+    }
+  }
+  ritmo.totalDiasComGanhos = ritmo.diasNormaisComGanhos + ritmo.diasEspeciaisComGanhos;
+  ritmo.mediaNormal = ritmo.diasNormaisComGanhos ? ritmo.mediaNormal / ritmo.diasNormaisComGanhos : 0;
+  ritmo.mediaEspecial = ritmo.diasEspeciaisComGanhos ? ritmo.mediaEspecial / ritmo.diasEspeciaisComGanhos : 0;
+  if (rotinaConfigurada(configBase)) {
+    const ultimoDia = new Date(ano, mes, 0).getDate();
+    for (let dia = 1; dia <= ultimoDia; dia++) {
+      const data = new Date(ano, mes - 1, dia);
+      if (!diaEhTrabalho(data, configBase)) continue;
+      if (diaEhEspecial(data)) ritmo.diasEspeciaisRestantes++;
+      else ritmo.diasNormaisRestantes++;
+    }
+    ritmo.diasNormaisRestantes = Math.max(ritmo.diasNormaisRestantes - ritmo.diasNormaisComGanhos, 0);
+    ritmo.diasEspeciaisRestantes = Math.max(ritmo.diasEspeciaisRestantes - ritmo.diasEspeciaisComGanhos, 0);
+    ritmo.proximoDia = proximoDiaPlanejado(ano, mes, ganhosPorDia, configBase);
+  } else {
+    ritmo.diasNormaisRestantes = Math.max((Number(diasPlanejados) || 0) - ritmo.totalDiasComGanhos, 0);
+  }
+  ritmo.unidadesRestantes = ritmo.diasNormaisRestantes + (ritmo.diasEspeciaisRestantes * ritmo.pesoEspecial);
+  return ritmo;
 }
 
 function diaEhTrabalhoBase(data, configBase = config) {
