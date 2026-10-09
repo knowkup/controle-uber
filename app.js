@@ -1514,7 +1514,20 @@ function atualizarDashboard(ctx) {
   const metaConsistenteOriginal = totaisMetasConfig().estabilidade;
   const custosBaseSobra = totaisCustosConfig().sobrevivencia;
 
-  const projecaoMes = mediaDiaValor * diasPlanejadosAtual;
+  const rotinaAtiva = rotinaConfigurada(config);
+  const mediaNormalProjetada = ritmoPorTipo.diasNormaisComGanhos
+    ? ritmoPorTipo.mediaNormal
+    : mediaDiaValor;
+  const mediaEspecialProjetada = ritmoPorTipo.diasEspeciaisComGanhos
+    ? ritmoPorTipo.mediaEspecial
+    : mediaNormalProjetada * ritmoPorTipo.pesoEspecial;
+  const projecaoMes = diasTrabalhadosValor > 0
+    ? (rotinaAtiva
+      ? entradas
+        + (mediaNormalProjetada * ritmoPorTipo.diasNormaisRestantes)
+        + (mediaEspecialProjetada * ritmoPorTipo.diasEspeciaisRestantes)
+      : mediaDiaValor * diasPlanejadosAtual)
+    : 0;
   const custosAtuais = Math.abs(saidas);
   const baseRetiradaPrevista = Math.max(custosBaseSobra, custosAtuais);
   const sobraProjetada = projecaoMes - baseRetiradaPrevista;
@@ -1537,7 +1550,9 @@ function atualizarDashboard(ctx) {
     sobraBox.classList.toggle("negativa", sobraProjetada < 0);
   }
   dashboardProjecaoSub.innerText = diasTrabalhadosValor > 0
-    ? `Baseada em ${diasTrabalhadosValor} dia(s) trabalhado(s)`
+    ? (rotinaAtiva
+      ? `Usa as médias de ${ritmoPorTipo.diasNormaisComGanhos} dia(s) seg–sex e ${ritmoPorTipo.diasEspeciaisComGanhos} dia(s) especial(is)`
+      : `Baseada em ${diasTrabalhadosValor} dia(s) trabalhado(s)`)
     : "Comece registrando seus ganhos para gerar projeção";
 
   const statusTexto = diasTrabalhadosValor > 0
