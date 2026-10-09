@@ -7,7 +7,7 @@
 <title>Controle Uber</title>
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="styles.css?v=20260929-planejamento-cenario">
+<link rel="stylesheet" href="styles.css?v=20261009-metas-ritmo">
 </head>
 
 <body>
@@ -176,6 +176,14 @@
       <strong id="dashboardSobraProjetada">R$ 0,00</strong>
       <small id="dashboardSobraBase">Considerando os custos do mês</small>
     </div>
+    <div class="dashboard-media-box">
+      <span>Média atual</span>
+      <div class="dashboard-media-valores">
+        <div><span>Seg&#8211;sex</span><strong id="dashMediaSemana">R$ 0,00</strong></div>
+        <div><span>Dia especial</span><strong id="dashMediaEspecial">R$ 0,00</strong></div>
+      </div>
+      <small id="dashMediaSub">sem ganhos registrados</small>
+    </div>
   </div>
   <div class="dashboard-status" id="dashboardStatus">Aguardando lançamentos</div>
 </div>
@@ -229,32 +237,6 @@
     <div class="meta-progress-text" id="dashProgressoIdeal">R$ 0,00 / R$ 0,00</div>
     <div class="meta-action" id="dashAcaoIdeal">Configure as metas</div>
   </div>
-</div>
-
-<div class="dashboard-grid-2">
-  <div class="card ritmo-atual-card">
-    <h3 class="heading-with-icon"><span class="heading-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M4 19V5"/><path d="M4 19h16"/><path d="m7 15 4-4 3 3 5-7"/></svg></span>Ritmo</h3>
-    <div class="dashboard-grid-2">
-      <div class="kpi-card kpi-media">
-        <span>Média atual</span>
-        <div class="ritmo-valores" id="dashMediaDia">
-          <div><span>Seg&#8211;sex</span><strong id="dashMediaSemana">R$ 0,00</strong></div>
-          <div><span>Dia especial</span><strong id="dashMediaEspecial">R$ 0,00</strong></div>
-        </div>
-        <p id="dashMediaSub">sem ganhos registrados</p>
-      </div>
-      <div class="kpi-card kpi-proxima">
-        <span id="dashProximaMetaLabel">Para alcançar estabilidade</span>
-        <strong id="dashMetaAjustada"><span class="daily-value">R$ 0,00</span><span class="daily-unit">/dia</span></strong>
-        <div class="ritmo-detalhes">
-          <span>Seg&#8211;sex <strong id="dashMetaSemana">R$ 0,00</strong></span>
-          <span>Dia especial <strong id="dashMetaEspecial">R$ 0,00</strong></span>
-        </div>
-        <p id="dashMetaSub">por dia restante planejado</p>
-      </div>
-    </div>
-  </div>
-
 </div>
 
 <div class="card composicao-metas-card">
@@ -510,7 +492,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="app.js?v=20260929-planejamento-cenario"></script>
+<script src="app.js?v=20261009-metas-ritmo"></script>
 
 </div>
 </body>

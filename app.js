@@ -1537,7 +1537,7 @@ function atualizarDashboard(ctx) {
     sobraBox.classList.toggle("negativa", sobraProjetada < 0);
   }
   dashboardProjecaoSub.innerText = diasTrabalhadosValor > 0
-    ? `Baseada em ${diasTrabalhadosValor} dia(s) trabalhado(s), média de ${moeda(mediaDiaValor)}`
+    ? `Baseada em ${diasTrabalhadosValor} dia(s) trabalhado(s)`
     : "Comece registrando seus ganhos para gerar projeção";
 
   const statusTexto = diasTrabalhadosValor > 0
@@ -1561,43 +1561,22 @@ function atualizarDashboard(ctx) {
   faixaConsistente.innerText = `Estabilidade ${moeda(estabilidadeAtualizada)}`;
   faixaIdeal.innerText = `Conforto ${moeda(confortoAtualizado)}`;
 
-  atualizarMetaCard("Minima", "Sobrevivência", custosSemParcela, sobrevivenciaAtualizada, entradas, diasRestantes);
-  atualizarMetaCard("Consistente", "Estabilidade", metaConsistenteOriginal, estabilidadeAtualizada, entradas, diasRestantes);
-  atualizarMetaCard("Ideal", "Conforto", custosTotais, confortoAtualizado, entradas, diasRestantes);
+  atualizarMetaCard("Minima", "Sobrevivência", custosSemParcela, sobrevivenciaAtualizada, entradas, diasRestantes, ritmoPorTipo);
+  atualizarMetaCard("Consistente", "Estabilidade", metaConsistenteOriginal, estabilidadeAtualizada, entradas, diasRestantes, ritmoPorTipo);
+  atualizarMetaCard("Ideal", "Conforto", custosTotais, confortoAtualizado, entradas, diasRestantes, ritmoPorTipo);
 
   dashMediaSemana.innerText = ritmoPorTipo.diasNormaisComGanhos ? moeda(ritmoPorTipo.mediaNormal) : "-";
   dashMediaEspecial.innerText = ritmoPorTipo.diasEspeciaisComGanhos ? moeda(ritmoPorTipo.mediaEspecial) : "-";
   dashMediaSub.innerText = ritmoPorTipo.totalDiasComGanhos
     ? `${ritmoPorTipo.diasNormaisComGanhos} dia(s) seg\u2013sex \u00b7 ${ritmoPorTipo.diasEspeciaisComGanhos} dia(s) especial(is)`
     : "sem ganhos registrados";
-  const proximaMeta = proximaMetaAtiva(entradas, sobrevivenciaAtualizada, estabilidadeAtualizada, confortoAtualizado);
-  const metaAjustadaCard = dashMetaAjustada.closest(".kpi-card");
-  if (proximaMeta) {
-    const faltaMeta = Math.max(proximaMeta.valor - entradas, 0);
-    const valorDiaNecessario = ritmoPorTipo.unidadesRestantes > 0
-      ? faltaMeta / ritmoPorTipo.unidadesRestantes
-      : (diasRestantes > 0 ? faltaMeta / diasRestantes : 0);
-    const valorDiaEspecial = valorDiaNecessario * ritmoPorTipo.pesoEspecial;
-    const proximoDiaEspecial = ritmoPorTipo.proximoDia?.especial || false;
-    metaAjustadaCard.style.display = "";
-    dashProximaMetaLabel.innerText = proximaMeta.acao;
-    dashMetaAjustada.innerHTML = `<span class="daily-value">${moeda(proximoDiaEspecial ? valorDiaEspecial : valorDiaNecessario)}</span><span class="daily-unit">/dia</span>`;
-    dashMetaSemana.innerText = moeda(valorDiaNecessario);
-    dashMetaEspecial.innerText = moeda(valorDiaEspecial);
-    const textoProximoDia = ritmoPorTipo.proximoDia
-      ? `Pr\u00f3ximo dia: ${ritmoPorTipo.proximoDia.rotulo}${proximoDiaEspecial ? " \u00b7 dia especial" : ""}`
-      : `${proximaMeta.nome} \u00b7 ${diasRestantes} dia(s) restantes`;
-    dashMetaSub.innerText = textoProximoDia;
-  } else {
-    metaAjustadaCard.style.display = "none";
-  }
 
   const semanas = calcularSemanasDoMes(!!ctx.snapMesFechado);
   const metaSemanalSemanasDoMes = estabilidadeAtualizada > 0 ? estabilidadeAtualizada / Math.max(semanas.length, 1) : 0;
   renderizarSemanas(semanas, metaSemanalSemanasDoMes);
 }
 
-function atualizarMetaCard(nome, rotulo, metaOriginal, metaAtualizada, atual, diasRestantes) {
+function atualizarMetaCard(nome, rotulo, metaOriginal, metaAtualizada, atual, diasRestantes, ritmoPorTipo = criarRitmoVazio()) {
   const card = document.getElementById(`cardMeta${nome}`);
   const pctEl = document.getElementById(`dashPct${nome}`);
   const barEl = document.getElementById(`dashBar${nome}`);
@@ -1621,7 +1600,10 @@ function atualizarMetaCard(nome, rotulo, metaOriginal, metaAtualizada, atual, di
   const percentualVisual = Math.min(Math.max(percentualExecutado, 0), 100);
   const faltaAtual = Math.max(metaAtualizada - atual, 0);
   const acima = Math.max(atual - metaAtualizada, 0);
-  const valorDiaNecessario = diasRestantes > 0 ? faltaAtual / diasRestantes : 0;
+  const valorDiaNormal = ritmoPorTipo.unidadesRestantes > 0
+    ? faltaAtual / ritmoPorTipo.unidadesRestantes
+    : (diasRestantes > 0 ? faltaAtual / diasRestantes : 0);
+  const valorDiaEspecial = valorDiaNormal * ritmoPorTipo.pesoEspecial;
 
   pctEl.innerText = `${Math.round(percentualExecutado)}%`;
   barEl.style.width = `${percentualVisual}%`;
@@ -1636,9 +1618,16 @@ function atualizarMetaCard(nome, rotulo, metaOriginal, metaAtualizada, atual, di
     acaoEl.innerHTML = `<div class="meta-action-panel"><span class="meta-action-icon">${metaIcone(nome)}</span><span><strong>${rotulo} alcançada</strong><small>+${moeda(acima)} acima da meta</small></span></div>`;
     card.classList.add("ok");
   } else {
-    const textoDia = diasRestantes > 0 ? `${moeda(valorDiaNecessario)}/dia` : "Sem dias planejados";
-    const detalhe = diasRestantes > 0 ? `nos ${diasRestantes} dia(s) planejado(s) restantes` : `para alcançar ${rotulo}`;
-    acaoEl.innerHTML = `<div class="meta-action-panel"><span class="meta-action-icon">${metaIcone(nome)}</span><span><strong>${textoDia}</strong><small>${detalhe}</small></span></div>`;
+    const detalhe = diasRestantes > 0
+      ? `${ritmoPorTipo.diasNormaisRestantes} dia(s) seg–sex · ${ritmoPorTipo.diasEspeciaisRestantes} dia(s) especial(is) restantes`
+      : `para alcançar ${rotulo}`;
+    const conteudo = diasRestantes > 0
+      ? `<div class="meta-action-rates">
+          <div class="meta-action-rate"><span>Seg–sex</span><strong>${moeda(valorDiaNormal)}<span class="daily-unit">/dia</span></strong></div>
+          <div class="meta-action-rate"><span>Dia especial</span><strong>${moeda(valorDiaEspecial)}<span class="daily-unit">/dia</span></strong></div>
+        </div><small>${detalhe}</small>`
+      : `<strong>Sem dias planejados</strong><small>${detalhe}</small>`;
+    acaoEl.innerHTML = `<div class="meta-action-panel"><span class="meta-action-icon">${metaIcone(nome)}</span><span>${conteudo}</span></div>`;
     card.classList.add(percentualExecutado >= 70 ? "alerta" : "longe");
   }
 }
