@@ -29,6 +29,7 @@ let config = {
   diasSemana: [],
   trabalhoEmFeriados: false,
   diasFolgaExtra: [],
+  diasFolgaAutomatica: [],
   diasTrabalhoExtra: [],
   modeloMetasVersao: 1,
   metas: []
@@ -45,6 +46,7 @@ let bloqueiaRestauracaoLocal = false;
 let metaEmEdicaoId = null;
 let mesCalendarioRotina = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 let simulacao = null;
+let temporizadorFolgasAutomaticas = null;
 
 document.getElementById("importarArquivo").addEventListener("change", importarJSON);
 document.getElementById("data").addEventListener("change", atualizarDataPorExtenso);
@@ -94,6 +96,7 @@ if (document.getElementById("trabalhoEmFeriados")) {
   document.getElementById("trabalhoEmFeriados").addEventListener("change", async event => {
     config.trabalhoEmFeriados = event.target.checked;
     atualizarDiasPlanejadosDaRotina();
+    sincronizarFolgasAutomaticas();
     render();
     await salvarEstado();
   });
@@ -280,6 +283,7 @@ async function salvarConfiguracoes() {
   config.modeloMetasVersao = 2;
   config.revisaoMesPendente = "";
   migrarMetasConfiguradas();
+  sincronizarFolgasAutomaticas();
 
   preencherCamposConfig();
   render();
@@ -825,6 +829,7 @@ function render() {
   });
 
   renderizarMetasConfig();
+  renderizarRotinaMensal();
   renderizarHistoricoMensal({ entradas, saidas, kmRodado, litrosTotal, gastoGasolina, lucroOperacional, custosSemParcela, metaConsistenteValor, custosTotais });
   renderizarCombustivel();
   renderizarBannerMesFechado(snapMesFechado);
@@ -1192,6 +1197,8 @@ function executarManutencaoMensal(forcar = false) {
   const mesAtual = mesKeyDeData(new Date());
   const mesAnterior = deslocarMesKey(mesAtual, -1);
   let alterou = false;
+
+  if (sincronizarFolgasAutomaticas()) alterou = true;
 
   const mesesNosLancamentos = [...new Set(dados.map(d => obterMesKey(d.data)).filter(Boolean))];
 
@@ -1812,6 +1819,9 @@ function normalizarConfigAtual() {
     .filter(dia => dia >= 1 && dia <= 7))].sort((a, b) => a - b);
   config.trabalhoEmFeriados = !!config.trabalhoEmFeriados;
   config.diasFolgaExtra = (Array.isArray(config.diasFolgaExtra) ? config.diasFolgaExtra : []).map(normalizarDataISO).filter(Boolean);
+  config.diasFolgaAutomatica = [...new Set((Array.isArray(config.diasFolgaAutomatica) ? config.diasFolgaAutomatica : [])
+    .map(normalizarDataISO)
+    .filter(Boolean))].sort();
   config.diasTrabalhoExtra = (Array.isArray(config.diasTrabalhoExtra) ? config.diasTrabalhoExtra : []).map(normalizarDataISO).filter(Boolean);
   config.modeloMetasVersao = Number(config.modeloMetasVersao) || 1;
   migrarMetasConfiguradas();
@@ -1828,6 +1838,7 @@ async function excluirPorId(id) {
     return;
   }
 
+  executarManutencaoMensal(false);
   render();
   await salvarEstado();
 }
@@ -1950,9 +1961,61 @@ function diaEhTrabalho(data, configBase = config) {
   const feriado = feriadosNacionais(data.getFullYear()).has(dataISO);
   let trabalha = configBase.diasSemana.includes(data.getDay() || 7);
   if (feriado && !configBase.trabalhoEmFeriados) trabalha = false;
+  if ((configBase.diasFolgaAutomatica || []).includes(dataISO)) trabalha = false;
   if (configBase.diasFolgaExtra.includes(dataISO)) trabalha = false;
   if (configBase.diasTrabalhoExtra.includes(dataISO)) trabalha = true;
   return trabalha;
+}
+
+function sincronizarFolgasAutomaticas() {
+  const anteriores = Array.isArray(config.diasFolgaAutomatica) ? config.diasFolgaAutomatica : [];
+  if (!rotinaConfigurada()) {
+    if (!anteriores.length) return false;
+    config.diasFolgaAutomatica = [];
+    return true;
+  }
+
+  const hoje = new Date();
+  const ano = hoje.getFullYear();
+  const mes = hoje.getMonth() + 1;
+  const mesAtual = mesKeyDeData(hoje);
+  const ganhosPorDia = new Set(dados
+    .filter(item => (
+      obterMesKey(item.data) === mesAtual
+      && item.descricao === "Ganhos Uber"
+      && Number(item.valor) > 0
+    ))
+    .map(item => item.data));
+  const folgasAutomaticas = [];
+
+  for (let dia = 1; dia < hoje.getDate(); dia++) {
+    const data = new Date(ano, mes - 1, dia);
+    const dataISO = dataISOCalendario(ano, mes, dia);
+    const excecaoManual = config.diasFolgaExtra.includes(dataISO) || config.diasTrabalhoExtra.includes(dataISO);
+    if (!diaEhTrabalhoBase(data, config) || excecaoManual || ganhosPorDia.has(dataISO)) continue;
+    folgasAutomaticas.push(dataISO);
+  }
+
+  if (JSON.stringify(anteriores) === JSON.stringify(folgasAutomaticas)) return false;
+  config.diasFolgaAutomatica = folgasAutomaticas;
+  atualizarDiasPlanejadosDaRotina();
+  return true;
+}
+
+function agendarRevisaoFolgasAutomaticas() {
+  if (temporizadorFolgasAutomaticas) clearTimeout(temporizadorFolgasAutomaticas);
+  const agora = new Date();
+  const proximaVirada = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate() + 1, 0, 0, 5);
+  const espera = Math.max(proximaVirada.getTime() - agora.getTime(), 1000);
+
+  temporizadorFolgasAutomaticas = setTimeout(async () => {
+    if (sincronizarFolgasAutomaticas()) {
+      preencherCamposConfig();
+      render();
+      await salvarEstado();
+    }
+    agendarRevisaoFolgasAutomaticas();
+  }, espera);
 }
 
 function criarRitmoVazio() {
@@ -2067,6 +2130,7 @@ async function alternarDiaSemana(dia) {
   else dias.add(dia);
   config.diasSemana = [...dias].sort((a, b) => a - b);
   atualizarDiasPlanejadosDaRotina();
+  sincronizarFolgasAutomaticas();
   renderizarRotinaMensal();
   render();
   await salvarEstado();
@@ -2126,14 +2190,16 @@ function renderizarRotinaMensal() {
     const data = new Date(ano, mes - 1, dia);
     const dataISO = dataISOCalendario(ano, mes, dia);
     const feriado = feriados.has(dataISO);
-    const excecao = config.diasFolgaExtra.includes(dataISO) || config.diasTrabalhoExtra.includes(dataISO);
+    const folgaAutomatica = (config.diasFolgaAutomatica || []).includes(dataISO);
+    const excecao = folgaAutomatica || config.diasFolgaExtra.includes(dataISO) || config.diasTrabalhoExtra.includes(dataISO);
     const trabalha = diaEhTrabalho(data);
     const classes = ["calendario-dia", trabalha ? "trabalho" : "folga"];
     if (feriado) classes.push("feriado");
     if (excecao) classes.push("excecao");
     if (!rotinaAtiva) classes.push("desabilitado");
     const estado = trabalha ? "Trabalho" : (feriado ? "Feriado" : "Folga");
-    return `<button type="button" class="${classes.join(" ")}" data-calendar-date="${dataISO}" ${rotinaAtiva ? "" : "disabled"} aria-label="${dia} de ${meses[mes - 1]}: ${estado}"><strong>${dia}</strong><small>${excecao ? "Exceção" : estado}</small></button>`;
+    const rotulo = folgaAutomatica ? "Folga automática" : (excecao ? "Exceção" : estado);
+    return `<button type="button" class="${classes.join(" ")}" data-calendar-date="${dataISO}" ${rotinaAtiva ? "" : "disabled"} aria-label="${dia} de ${meses[mes - 1]}: ${estado}"><strong>${dia}</strong><small>${rotulo}</small></button>`;
   });
   grade.innerHTML = [...vazios, ...dias].join("");
 }
@@ -2658,6 +2724,7 @@ async function limparDados() {
     diasSemana: [],
     trabalhoEmFeriados: false,
     diasFolgaExtra: [],
+    diasFolgaAutomatica: [],
     diasTrabalhoExtra: [],
     modeloMetasVersao: 2,
     revisaoMesPendente: "",
@@ -2725,3 +2792,4 @@ definirDataHoje();
 selecionar("ganho");
 render();
 iniciarSincronizacaoFirebase();
+agendarRevisaoFolgasAutomaticas();
